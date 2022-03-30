@@ -7,7 +7,8 @@ class ReactiveEffect {
     }
     run(){
         activeEffect=this
-        this._fn()
+        // 返回执行结果
+        return this._fn()
     }
 }
 export function track(target,key){
@@ -42,6 +43,9 @@ export function trigger(target,key){
 export function effect(fn){
     const _effect=new ReactiveEffect(fn)
     _effect.run()
+    //需绑定执行上下文
+    const runner = _effect.run.bind(_effect)
+    return runner
 
 }
 

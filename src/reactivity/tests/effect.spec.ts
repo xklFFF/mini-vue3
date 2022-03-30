@@ -16,4 +16,17 @@ describe("effect",()=>{
         user.age++;
         expect(nextAge).toBe(12)
     })
+    //测试能否返回一个函数，并且能接受该函数的结果
+    it("return runner",()=>{
+        let age =10 
+        const runner=effect(()=>{
+            
+            age++
+            return age
+        })
+        expect(age).toBe(11)
+        const  res=runner()
+        expect(res).toBe(12)
+        expect(runner()).toBe(13)
+    })
 })
