@@ -2,8 +2,11 @@ let targetMap=new Map()
 let activeEffect
 class ReactiveEffect {
     private _fn:any
-    constructor(fn) {
+    public scheduler:Function|undefined
+    constructor(fn,scheduler?:Function) {
         this._fn = fn
+        this.scheduler=scheduler
+
     }
     run(){
         activeEffect=this
@@ -35,13 +38,19 @@ export function trigger(target,key){
         let dep=depsMap.get(key)
         //将所有依赖函数取出并且执行
         for(const effect of dep){
-            effect.run()
+            if(effect.scheduler){
+                effect.scheduler()
+            }else{
+                effect.run()
+            }
         }
 }
 
-
-export function effect(fn){
-    const _effect=new ReactiveEffect(fn)
+type effectOptions = {
+    scheduler?: Function
+}
+export function effect(fn,options:effectOptions={}){
+    const _effect=new ReactiveEffect(fn,options.scheduler)
     _effect.run()
     //需绑定执行上下文
     const runner = _effect.run.bind(_effect)
