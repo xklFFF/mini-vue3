@@ -1,6 +1,6 @@
 import format from "pretty-format"
 import { reactive } from "../reactive"
-import {effect} from "../effect"
+import {effect, stop} from "../effect"
 
 describe("effect",()=>{
     //测试是否具有响应式，并且能触发依赖和依赖收集
@@ -56,4 +56,21 @@ describe("effect",()=>{
         // // should have run
         expect(dummy).toBe(2);
       });
+    //测试stop功能
+    it("stop",()=>{
+      let dummy;
+      const obj = reactive({prop:1})
+      const runner = effect(()=>{
+        dummy=obj.prop
+      })
+      obj.prop = 2
+      expect(dummy).toBe(2)
+      stop(runner)
+      obj.prop = 3
+      expect(dummy).toBe(2)
+      runner()
+      expect(dummy).toBe(3)
+      obj.prop=4
+      expect(dummy).toBe(4)
+    })
 })
