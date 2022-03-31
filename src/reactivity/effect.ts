@@ -1,9 +1,12 @@
+import { extend } from "."
+
 let targetMap=new Map()
 let activeEffect
 class ReactiveEffect {
     private _fn:any
     deps = []
-
+    onStop?:()=>void
+    active = true
     public scheduler:Function|undefined
     constructor(fn,scheduler?:Function) {
         this._fn = fn
@@ -16,7 +19,16 @@ class ReactiveEffect {
         return this._fn()
     }
     stop(){
-        cleanupEffect(this)
+        // 防止stop重复调用
+        if(this.active){
+            cleanupEffect(this)
+            if(this.onStop){
+                this.onStop()
+            }
+            this.active = false
+
+        }
+        
     }
 }
 //清空依赖
@@ -65,6 +77,8 @@ type effectOptions = {
 }
 export function effect(fn,options:any={}){
     const _effect=new ReactiveEffect(fn,options.scheduler)
+    // 将options属性扩展到_effect中
+    extend(_effect,options)
     _effect.run()
     //需绑定执行上下文
     const runner:any = _effect.run.bind(_effect)

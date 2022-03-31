@@ -73,4 +73,26 @@ describe("effect",()=>{
       obj.prop=4
       expect(dummy).toBe(4)
     })
+    //测试stop的回调函数
+    it("onStop",()=>{
+      const obj = reactive({
+        foo:1
+      })
+      const onStop=jest.fn()
+      let dummy
+      const runner = effect(
+        ()=>{
+          dummy=obj.foo 
+        },
+        {
+          onStop
+        }
+
+      )
+      // 测试多次调用是否重复触发
+      stop(runner)
+      expect(onStop).toBeCalledTimes(1)
+      stop(runner)
+      expect(onStop).toBeCalledTimes(1)
+    })
 })
