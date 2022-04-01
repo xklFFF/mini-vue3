@@ -1,30 +1,16 @@
+import { mutableHandler, readonlyHandler } from "./baseHandler"
 import { track, trigger } from "./effect"
 
+//将reactive和reaonly的处理函数抽取到baseHandler中
 export function reactive(target){
-    return new Proxy(target,{
-        get(target,key){
-            const res=Reflect.get(target,key)
-            track(target,key)
-            return  res
-        },
-        set(target,key,val){
-            const res=Reflect.set(target,key,val)
-            trigger(target,key)
-            return res
-        }
-    })
-
+return createReactiveObjec(target,mutableHandler)
 }
 
 export function readonly(target){
-    return new Proxy(target,{
-        get(target,key){
-            const res=Reflect.get(target,key)
-            return  res
-        },
-        set(target,key,val){
-            console.warn(`key :"${String(key)}" set 失败，因为 target 是 readonly 类型`)
-            return true
-        }
-    })
+    return createReactiveObjec(target,readonlyHandler)
+}
+
+
+function createReactiveObjec(target,baseHandler){
+    return new Proxy(target,baseHandler)
 }
