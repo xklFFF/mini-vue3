@@ -6,6 +6,9 @@ describe("readonly",()=>{
         const wrapped = readonly(original)
         expect(wrapped).not.toBe(original)
         expect(wrapped.foo).toBe(1)
+        //判断嵌套转换
+        expect(isReadonly(original.bar)).toBe(false)
+        expect(isReadonly(wrapped.bar)).toBe(true)
     })
     it("should call console.warn when set",()=>{
         console.warn = jest.fn()

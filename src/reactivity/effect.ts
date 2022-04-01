@@ -1,4 +1,4 @@
-import { extend } from "./index"
+import { extend } from "../share/index"
 const targetMap=new Map()
 let activeEffect
 let shouldTrack = false
