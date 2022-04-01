@@ -1,4 +1,4 @@
-import { isReadonly, readonly } from "../reactive"
+import { isProxy, isReadonly, readonly } from "../reactive"
 
 describe("readonly",()=>{
     it("should make nested values readonly",()=>{
@@ -9,6 +9,8 @@ describe("readonly",()=>{
         //判断嵌套转换
         expect(isReadonly(original.bar)).toBe(false)
         expect(isReadonly(wrapped.bar)).toBe(true)
+        //判断isProxy
+        expect(isProxy(wrapped)).toBe(true)
     })
     it("should call console.warn when set",()=>{
         console.warn = jest.fn()

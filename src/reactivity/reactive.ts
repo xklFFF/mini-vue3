@@ -26,7 +26,9 @@ export function isReactive(target){
     // 转换布尔值
     return !!target[ReactiveFlags.IS_REACTIVE];
 }
-
+export function isProxy(target){
+    return isReactive(target)||isReadonly(target)
+}
 function createReactiveObject(target,baseHandler){
     return new Proxy(target,baseHandler)
 }
