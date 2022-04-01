@@ -48,7 +48,7 @@ function cleanupEffect(effect){
     // 清空effect.dps
     effect.deps.length=0
 }
-function isTracking(){
+export function isTracking(){
     return shouldTrack && activeEffect !== undefined;
 }
 export function track(target,key){
@@ -65,12 +65,15 @@ export function track(target,key){
         dep=new Set()
         depsMap.set(key,dep)
     }
+    trackEffects(dep)
+    
+}
+export function trackEffects(dep){
     // 查看dep之前有没有添加过，添加过了就不再添加了
     if(dep.has(activeEffect)) return
     // 反向收集那些会引起副作用函数的地方
     dep.add(activeEffect)
     activeEffect.deps.push(dep)
-    
 }
 
 export function trigger(target,key){
@@ -78,14 +81,17 @@ export function trigger(target,key){
       let depsMap=targetMap.get(target)
         //获取对应属性key的依赖set集合
         let dep=depsMap.get(key)
-        //将所有依赖函数取出并且执行
-        for(const effect of dep){
-            if(effect.scheduler){
-                effect.scheduler()
-            }else{
-                effect.run()
+        triggerEffects(dep)
+}
+export function triggerEffects(dep){
+            //将所有依赖函数取出并且执行
+            for(const effect of dep){
+                if(effect.scheduler){
+                    effect.scheduler()
+                }else{
+                    effect.run()
+                }
             }
-        }
 }
 
 export function effect(fn,options:any={}){
