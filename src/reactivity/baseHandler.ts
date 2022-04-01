@@ -1,5 +1,4 @@
 import { track, trigger } from "./effect"
-import { readonly } from "./reactive"
 
 const get = createGetter();
 const set = createSetter();
@@ -8,7 +7,7 @@ const readonlyGet = createGetter(true);
 function createGetter(isReadonly = false) {
     return function get(target, key) {
         const res = Reflect.get(target, key)
-        if (!readonly) {
+        if (!isReadonly) {
             track(target, key)
         }
         return res

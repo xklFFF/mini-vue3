@@ -1,7 +1,7 @@
-import { extend } from "."
-
-let targetMap=new Map()
+import { extend } from "./index"
+const targetMap=new Map()
 let activeEffect
+let shouldTrack = false
 class ReactiveEffect {
     private _fn:any
     deps = []
@@ -14,9 +14,18 @@ class ReactiveEffect {
 
     }
     run(){
-        activeEffect=this
-        // 返回执行结果
+        if(!this.active){
+                    // 返回执行结果
         return this._fn()
+        }
+        //应该收集
+        shouldTrack = true
+        activeEffect=this
+        const r =this._fn()
+        //重置
+        shouldTrack = false
+        return r
+
     }
     stop(){
         // 防止stop重复调用
@@ -36,8 +45,14 @@ function cleanupEffect(effect){
     effect.deps.forEach((dep:any) => {
         dep.delete(effect)
     });
+    // 清空effect.dps
+    effect.deps.length=0
+}
+function isTracking(){
+    return shouldTrack && activeEffect !== undefined;
 }
 export function track(target,key){
+    if(!isTracking()) return
     //获取当前对象target对应的缓存map'
     let depsMap=targetMap.get(target)
     if(!depsMap){
@@ -50,7 +65,8 @@ export function track(target,key){
         dep=new Set()
         depsMap.set(key,dep)
     }
-    if(!activeEffect) return
+    // 查看dep之前有没有添加过，添加过了就不再添加了
+    if(dep.has(activeEffect)) return
     // 反向收集那些会引起副作用函数的地方
     dep.add(activeEffect)
     activeEffect.deps.push(dep)
@@ -72,9 +88,6 @@ export function trigger(target,key){
         }
 }
 
-type effectOptions = {
-    scheduler?: Function
-}
 export function effect(fn,options:any={}){
     const _effect=new ReactiveEffect(fn,options.scheduler)
     // 将options属性扩展到_effect中

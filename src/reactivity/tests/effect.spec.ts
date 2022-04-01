@@ -13,7 +13,7 @@ describe("effect",()=>{
             nextAge=user.age+1
         })
         expect(nextAge).toBe(11)
-        user.age++;
+        user.age+=1;
         expect(nextAge).toBe(12)
     })
     //测试能否返回一个函数，并且能接受该函数的结果
@@ -70,8 +70,6 @@ describe("effect",()=>{
       expect(dummy).toBe(2)
       runner()
       expect(dummy).toBe(3)
-      obj.prop=4
-      expect(dummy).toBe(4)
     })
     //测试stop的回调函数
     it("onStop",()=>{
