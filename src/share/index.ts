@@ -6,3 +6,4 @@ export const isObeject = (value) => {
 export const hasChanged=(val,newValue)=>{
     return !Object.is(val,newValue)
 } 
+export const isArray = Array.isArray

@@ -1,6 +1,6 @@
-import { hasChanged, isObeject } from "../share"
+import { hasChanged, isArray, isObeject } from "../share"
 import { trackEffects, triggerEffects, isTracking } from "./effect"
-import { reactive } from "./reactive"
+import { isProxy, reactive } from "./reactive"
 
 class RefImpl {
     private _value
@@ -95,7 +95,18 @@ export function toRef<T extends object, k extends keyof T>(
     key: k,
     defaultValue?: T[k]) {
     const val = object[key]
-    //如果值本事是ref直接返回就好，不是则进行包装
+    //如果值本身是ref直接返回就好，不是则进行包装
     return isRef(val) ? val : (new ObjectRefImpl(object, key, defaultValue))
 
+}
+
+export function toRefs(object){
+    if(!isProxy(object)){
+        console.warn(`toRefs() expects a reactive object but received a plain one.`)
+    }
+    const res:any=isArray(object)?new Array(object.length):{}
+    for(const key in object){
+        res[key]=toRef(object,key)
+    }
+    return res
 }
