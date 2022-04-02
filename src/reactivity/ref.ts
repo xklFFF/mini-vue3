@@ -48,3 +48,25 @@ export function isRef(ref) {
 export function unRef(ref){
     return isRef(ref)?ref.value:ref
 }
+
+// 这个方法我们在写模板，也就是 HTML 里面使用 ref 不需要手动加上 .vulue 的原因，自动帮我们使用了这个方法
+//有ref就帮你剥离value出来，没有ref直接返回value
+export function proxyRefs(objectWithRefs){
+    //TODO，如果是原始对象，返回原始对象就好，不用经过proxy代理
+    return new Proxy(objectWithRefs,{
+        get(target,key){
+            //获取值，如果是ref则把值剥离出来
+            return unRef(Reflect.get(target,key))
+        },
+        set (target,key,value){{
+            // 如果把一个非ref的值赋给ref，需要通过ref.value=value这种形式
+            if(isRef(target[key])&&!isRef(value)){
+                return (target[key].value = value)
+            }else{
+                return Reflect.set(target,key,value)
+            }
+        }
+
+        }
+    } )
+}
