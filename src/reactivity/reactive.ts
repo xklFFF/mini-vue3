@@ -4,6 +4,8 @@ import { track, trigger } from "./effect"
 export const enum ReactiveFlags{
     IS_REACTIVE = "__v_isReactive",
     IS_READONLY = "__v_isReadonly",
+    RAW = '__v_raw'
+
 }
 //将reactive和reaonly的处理函数抽取到baseHandler中
 export function reactive(target){
@@ -34,4 +36,11 @@ export function isProxy(target){
 }
 function createReactiveObject(target,baseHandler){
     return new Proxy(target,baseHandler)
+}
+
+export function toRaw(observed){
+    // 若observed不是响应对象，raw为undefin，返回observed
+    //若observed是响应对象，raw为响应对象的原始值，需对原始值进行检查是否为嵌套响应
+    const raw=observed&&observed[ReactiveFlags.RAW]
+    return raw?toRaw(raw):observed
 }
