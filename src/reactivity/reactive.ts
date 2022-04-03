@@ -1,4 +1,4 @@
-import { mutableHandler, readonlyHandler, shallowReadonlyHandler } from "./baseHandler"
+import { mutableHandler, readonlyHandler, shallowReactiveHandler, shallowReadonlyHandler } from "./baseHandler"
 import { track, trigger } from "./effect"
 
 export const enum ReactiveFlags{
@@ -18,6 +18,9 @@ export function shallowReadonly(target){
     return createReactiveObject(target,shallowReadonlyHandler)
 }
 
+export function shallowReactive(target){
+    return createReactiveObject(target,shallowReactiveHandler)
+}
 export function isReadonly(target){
     // 转换布尔值
     return !!target[ReactiveFlags.IS_READONLY];

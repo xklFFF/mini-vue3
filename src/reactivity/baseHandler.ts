@@ -6,6 +6,7 @@ const get = createGetter();
 const set = createSetter();
 const readonlyGet = createGetter(true);
 const shallowReadonlyGet = createGetter(true,true)
+const shallowReactiveGet = createGetter(false,true)
 
 function createGetter(isReadonly = false, shallow = false) {
     return function get(target, key) {
@@ -16,11 +17,9 @@ function createGetter(isReadonly = false, shallow = false) {
             return isReadonly
         }
         const res = Reflect.get(target, key)
-        if(shallow){
-            return res
-        }
+        //如果shallow就返回，那么没法被追踪到
         // 嵌套对象也需要转换成响应式
-        if(isObeject(res)){
+        if(isObeject(res)&&!shallow){
             return isReadonly?readonly(res):reactive(res)
         }
         if (!isReadonly) {
@@ -30,7 +29,7 @@ function createGetter(isReadonly = false, shallow = false) {
     }
 }
 
-function createSetter(isReadonly = false) {
+function createSetter() {
     return function set(target, key, value) {
         const res = Reflect.set(target, key, value)
         trigger(target, key)
@@ -55,3 +54,4 @@ export const readonlyHandler = {
 }
 
 export const shallowReadonlyHandler =extend({},readonlyHandler,{get:shallowReadonlyGet})
+export const shallowReactiveHandler = extend({},mutableHandler,{get:shallowReactiveGet})
