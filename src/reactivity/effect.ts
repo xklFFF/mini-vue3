@@ -1,6 +1,8 @@
 import { extend } from "../share/index"
 const targetMap = new Map()
 let activeEffect
+// 用一个栈来记录activeEffect，避免effect嵌套中深层次activeEffect把浅层的activeEffect覆盖
+let effectStack = <any>[]
 let shouldTrack = false
 export class ReactiveEffect {
     private _fn: any
@@ -20,11 +22,12 @@ export class ReactiveEffect {
         }
         //应该收集
         shouldTrack = true
-        activeEffect = this
+        effectStack.push(activeEffect = this)
         const r = this._fn()
-        //重置
-        shouldTrack = false
+        effectStack.pop()
+        activeEffect = effectStack[effectStack.length - 1]
         return r
+
 
     }
     stop() {
@@ -85,6 +88,9 @@ export function trigger(target, key) {
     }
     //获取对应属性key的依赖set集合
     let dep = depsMap.get(key)
+    if (!dep) {
+        return
+    }
     triggerEffects(dep)
 }
 export function triggerEffects(dep) {
