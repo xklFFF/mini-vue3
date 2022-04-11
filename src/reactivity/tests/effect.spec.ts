@@ -163,4 +163,24 @@ describe("effect", () => {
     expect(childSpy).toHaveBeenCalledTimes(5)
   })
 
+  
+  it('should not be triggered by mutating a property, which is used in an inactive branch', () => {
+    let dummy
+    const obj = reactive({ prop: 'value', run: true })
+
+    const conditionalSpy = jest.fn(() => {
+      dummy = obj.run ? obj.prop : 'other'
+    })
+    effect(conditionalSpy)
+
+    expect(dummy).toBe('value')
+    expect(conditionalSpy).toHaveBeenCalledTimes(1)
+    obj.run = false
+    expect(dummy).toBe('other')
+    expect(conditionalSpy).toHaveBeenCalledTimes(2)
+    obj.prop = 'value2'
+    expect(dummy).toBe('other')
+    expect(conditionalSpy).toHaveBeenCalledTimes(2)
+  })
+
 })

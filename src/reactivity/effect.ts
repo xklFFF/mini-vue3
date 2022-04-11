@@ -23,6 +23,7 @@ export class ReactiveEffect {
         //应该收集
         shouldTrack = true
         effectStack.push(activeEffect = this)
+        cleanupEffect(this)
         const r = this._fn()
         effectStack.pop()
         activeEffect = effectStack[effectStack.length - 1]
@@ -94,6 +95,9 @@ export function trigger(target, key) {
     triggerEffects(dep)
 }
 export function triggerEffects(dep) {
+    //语言规范中对此有明确的说明：在调用forEach遍历Set集合时，如果一个值已经被访问过了，但该值被删除并重新添加到集合中，
+    //如果此时foreach遍历没有结束，那么该值就会重新被访问。因此代码会无限执行，通过构造另一个set来遍历就可以避免
+    dep = new Set(dep)
     //将所有依赖函数取出并且执行
     for (const effect of dep) {
         if (effect.scheduler) {
