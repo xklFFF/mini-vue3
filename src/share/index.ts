@@ -7,3 +7,5 @@ export const hasChanged=(val,newValue)=>{
     return !Object.is(val,newValue)
 } 
 export const isArray = Array.isArray
+
+export const hasOwn = (val:object,key)=>val.hasOwnProperty(key)

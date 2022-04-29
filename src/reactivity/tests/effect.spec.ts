@@ -183,4 +183,26 @@ describe("effect", () => {
     expect(conditionalSpy).toHaveBeenCalledTimes(2)
   })
 
+  it('should observe delete operations', () => {
+    let dummy
+    const obj = reactive({ prop: 'value' })
+    effect(() => (dummy = obj.prop))
+
+    expect(dummy).toBe('value')
+    // @ts-ignore
+    delete obj.prop
+    expect(dummy).toBe(undefined)
+  })
+  it('should observe has operations', () => {
+    let dummy
+    const obj = reactive({ prop: 'value' })
+    effect(() => (dummy = 'prop' in obj))
+
+    expect(dummy).toBe(true)
+    // @ts-ignore
+    delete obj.prop
+    expect(dummy).toBe(false)
+    obj.prop = 12
+    expect(dummy).toBe(true)
+  })
 })

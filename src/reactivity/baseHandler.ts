@@ -1,4 +1,4 @@
-import { extend, isObeject } from "../share";
+import { extend, hasOwn, isObeject } from "../share";
 import { track, trigger } from "./effect"
 import { reactive, ReactiveFlags, readonly } from "./reactive";
 
@@ -45,10 +45,21 @@ function has(target, key) {
     track(target, key)
     return result
 }
+//用来拦截删除操作
+function deleteProperty(target,key){
+    const hadKey = hasOwn(target,key)
+    const oldValue = target[key]
+    const result = Reflect.deleteProperty(target,key)
+    if(result && hadKey){
+        trigger(target,key)
+    }
+    return result
+}
 export const mutableHandler = {
     get,
     set,
-    has
+    has,
+    deleteProperty
 }
 export const readonlyHandler = {
     get: readonlyGet,
