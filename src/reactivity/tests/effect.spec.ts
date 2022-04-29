@@ -205,4 +205,24 @@ describe("effect", () => {
     obj.prop = 12
     expect(dummy).toBe(true)
   })
+  // 观察枚举值 for in
+  it('should observe enumeration', () => {
+    let dummy = 0
+    const numbers = reactive({ num1: 3 })
+    effect(() => {
+      dummy = 0
+      for (let key in numbers) {
+        dummy += numbers[key]
+      }
+    })
+
+    expect(dummy).toBe(3)
+    numbers.num2 = 4
+    expect(dummy).toBe(7)
+    delete numbers.num1
+    expect(dummy).toBe(4)
+  })
+
+
+
 })

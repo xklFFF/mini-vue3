@@ -1,5 +1,6 @@
 import { extend, hasOwn, isObeject } from "../share";
-import { track, trigger } from "./effect"
+import { track, trigger,ITERATE_KEY} from "./effect"
+import { TriggerOpTypes } from "./operations";
 import { reactive, ReactiveFlags, readonly } from "./reactive";
 
 const get = createGetter();
@@ -33,8 +34,10 @@ function createGetter(isReadonly = false, shallow = false) {
 
 function createSetter() {
     return function set(target, key, value) {
+        const type=hasOwn(target,key)?TriggerOpTypes.SET:TriggerOpTypes.ADD
         const res = Reflect.set(target, key, value)
-        trigger(target, key)
+        
+        trigger(target, key,type)
         return res
     }
 }
@@ -51,15 +54,24 @@ function deleteProperty(target,key){
     const oldValue = target[key]
     const result = Reflect.deleteProperty(target,key)
     if(result && hadKey){
-        trigger(target,key)
+        trigger(target,key,TriggerOpTypes.DELETE)
     }
     return result
+}
+//用来拦截for in操作
+function ownKeys(target){
+
+  track(target,ITERATE_KEY)
+
+  return Reflect.ownKeys(target)
+
 }
 export const mutableHandler = {
     get,
     set,
     has,
-    deleteProperty
+    deleteProperty,
+    ownKeys
 }
 export const readonlyHandler = {
     get: readonlyGet,

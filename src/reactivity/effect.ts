@@ -1,9 +1,13 @@
+import { TrackOpTypes, TriggerOpTypes } from './operations'
 import { extend } from "../share/index"
 import { createDep, newTracked, wasTracked, initDepMarkers, finalizeDepMarkers, Dep } from "./dep"
 const targetMap = new Map()
 let activeEffect
 // 用一个栈来记录activeEffect，避免effect嵌套中深层次activeEffect把浅层的activeEffect覆盖
 let effectStack = <any>[]
+
+export const ITERATE_KEY = Symbol()    
+
 let shouldTrack = false
 // 全局变量用来记录嵌套的深度
 let effectTrackDepth = 0
@@ -124,19 +128,41 @@ export function trackEffects(dep) {
     }
 }
 
-export function trigger(target, key) {
+export function trigger(target, key,type) {
     //获取当前对象target对应的缓存map'
     let depsMap = targetMap.get(target)
     if (!depsMap) {
         // never been tracked
         return
     }
+
+    let deps:(Dep | undefined)[] = []
     //获取对应属性key的依赖set集合
-    let dep = depsMap.get(key)
-    if (!dep) {
-        return
+    //此处使用void 0的原因
+    // undefined可以被重写
+    // 从性能方面： void 0 比 undefined 少了三个字节
+    // 保证结果不变性
+    if(key !== void 0){
+        deps.push(depsMap.get(key))
     }
-    triggerEffects(dep)
+    // let dep = 
+    // if (!dep) {
+    //     return
+    // }
+    
+    // triggerEffects(dep)
+    //只有当属性为ADD或者DELETE才触发与ITERATE_KEY相关的副作用
+    if(type === TriggerOpTypes.ADD||type === TriggerOpTypes.DELETE){
+        const iterateEffects =depsMap.get(ITERATE_KEY)
+        deps.push(iterateEffects)     
+    }
+    const effects: ReactiveEffect[] = []
+    for (const dep of deps) {
+      if (dep) {
+        effects.push(...dep)
+      }
+    }
+    triggerEffects(effects)
 }
 export function triggerEffects(dep) {
     //语言规范中对此有明确的说明：在调用forEach遍历Set集合时，如果一个值已经被访问过了，但该值被删除并重新添加到集合中，
