@@ -5,8 +5,8 @@ import { reactive, ReactiveFlags, readonly } from "./reactive";
 const get = createGetter();
 const set = createSetter();
 const readonlyGet = createGetter(true);
-const shallowReadonlyGet = createGetter(true,true)
-const shallowReactiveGet = createGetter(false,true)
+const shallowReadonlyGet = createGetter(true, true)
+const shallowReactiveGet = createGetter(false, true)
 
 function createGetter(isReadonly = false, shallow = false) {
     return function get(target, key) {
@@ -15,14 +15,14 @@ function createGetter(isReadonly = false, shallow = false) {
             return !isReadonly
         } else if (key === ReactiveFlags.IS_READONLY) {
             return isReadonly
-        }else if(key === ReactiveFlags.RAW){
+        } else if (key === ReactiveFlags.RAW) {
             return target
         }
         const res = Reflect.get(target, key)
         //如果shallow就返回，那么没法被追踪到
         // 嵌套对象也需要转换成响应式
-        if(isObeject(res)&&!shallow){
-            return isReadonly?readonly(res):reactive(res)
+        if (isObeject(res) && !shallow) {
+            return isReadonly ? readonly(res) : reactive(res)
         }
         if (!isReadonly) {
             track(target, key)
@@ -39,9 +39,16 @@ function createSetter() {
     }
 }
 
+// 用来拦截in操作符号
+function has(target, key) {
+    const result = Reflect.get(target, key)
+    track(target, key)
+    return result
+}
 export const mutableHandler = {
     get,
-    set
+    set,
+    has
 }
 export const readonlyHandler = {
     get: readonlyGet,
@@ -55,5 +62,5 @@ export const readonlyHandler = {
     }
 }
 
-export const shallowReadonlyHandler =extend({},readonlyHandler,{get:shallowReadonlyGet})
-export const shallowReactiveHandler = extend({},mutableHandler,{get:shallowReactiveGet})
+export const shallowReadonlyHandler = extend({}, readonlyHandler, { get: shallowReadonlyGet })
+export const shallowReactiveHandler = extend({}, mutableHandler, { get: shallowReactiveGet })

@@ -5,7 +5,10 @@ import { isProxy, isReactive, reactive, readonly, toRaw } from "../reactive"
          const origin = {foo:1}
          const observed = reactive (origin)
          expect(observed).not.toBe(origin)
+         //get
          expect(observed.foo).toBe(1)
+         //has
+         expect('foo' in observed).toBe(true)
          //判断isProxy
         expect(isProxy(observed)).toBe(true)
      })
