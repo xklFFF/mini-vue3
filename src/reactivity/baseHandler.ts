@@ -1,4 +1,4 @@
-import { extend, hasChanged, hasOwn, isObeject } from "../share";
+import { extend, hasChanged, hasOwn, isArray, isObeject } from "../share";
 import { track, trigger, ITERATE_KEY } from "./effect"
 import { TriggerOpTypes } from "./operations";
 import { reactive, ReactiveFlags, readonly, toRaw } from "./reactive";
@@ -33,13 +33,14 @@ function createGetter(isReadonly = false, shallow = false) {
 }
 
 function createSetter() {
-    return function set(target, key, value) {
-        const hadKey = hasOwn(target, key)
+    return function set(target, key, value, receiver) {
+        // 判断一个键原来是否存在要先区分target是对象还是数组
+        const hadKey = isArray(target) ? Number(key) < target.length : hasOwn(target, key)
         // 要注意在这里必须先获取旧值
         let oldValue = target[key]
-        const res = Reflect.set(target, key, value)
+        const res = Reflect.set(target, key, value, receiver)
         // 判断设置的对象跟代理对象是否有关系，解决了原型问题
-        if (target === toRaw(target)) {
+        if (target === toRaw(receiver)) {
             // 如果原型没用这个key说明是新增加的
             if (!hadKey) {
                 trigger(target, key, TriggerOpTypes.ADD)

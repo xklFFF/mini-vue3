@@ -1,12 +1,12 @@
 import { TrackOpTypes, TriggerOpTypes } from './operations'
-import { extend } from "../share/index"
+import { extend, isArray } from "../share/index"
 import { createDep, newTracked, wasTracked, initDepMarkers, finalizeDepMarkers, Dep } from "./dep"
 const targetMap = new Map()
 let activeEffect
 // 用一个栈来记录activeEffect，避免effect嵌套中深层次activeEffect把浅层的activeEffect覆盖
 let effectStack = <any>[]
 
-export const ITERATE_KEY = Symbol()    
+export const ITERATE_KEY = Symbol()
 
 let shouldTrack = false
 // 全局变量用来记录嵌套的深度
@@ -128,7 +128,7 @@ export function trackEffects(dep) {
     }
 }
 
-export function trigger(target, key,type) {
+export function trigger(target, key, type) {
     //获取当前对象target对应的缓存map'
     let depsMap = targetMap.get(target)
     if (!depsMap) {
@@ -136,31 +136,49 @@ export function trigger(target, key,type) {
         return
     }
 
-    let deps:(Dep | undefined)[] = []
+    let deps: (Dep | undefined)[] = []
     //获取对应属性key的依赖set集合
     //此处使用void 0的原因
     // undefined可以被重写
     // 从性能方面： void 0 比 undefined 少了三个字节
     // 保证结果不变性
-    if(key !== void 0){
+    if (key !== void 0) {
         deps.push(depsMap.get(key))
     }
     // let dep = 
     // if (!dep) {
     //     return
     // }
-    
+
     // triggerEffects(dep)
     //只有当属性为ADD或者DELETE才触发与ITERATE_KEY相关的副作用
-    if(type === TriggerOpTypes.ADD||type === TriggerOpTypes.DELETE){
-        const iterateEffects =depsMap.get(ITERATE_KEY)
-        deps.push(iterateEffects)     
+    // if (type === TriggerOpTypes.ADD || type === TriggerOpTypes.DELETE) {
+    //     const iterateEffects = depsMap.get(ITERATE_KEY)
+    //     deps.push(iterateEffects)
+    // }
+
+    switch (type) {
+        case TriggerOpTypes.ADD:
+            if (!isArray(target)) {
+                deps.push(depsMap.get(ITERATE_KEY))
+            } else {
+                deps.push(depsMap.get('length'))
+            }
+            break
+        case TriggerOpTypes.DELETE:
+            if (!isArray(target)) {
+                deps.push(depsMap.get(ITERATE_KEY))
+            }
+            break
     }
+
+
+
     const effects: ReactiveEffect[] = []
     for (const dep of deps) {
-      if (dep) {
-        effects.push(...dep)
-      }
+        if (dep) {
+            effects.push(...dep)
+        }
     }
     triggerEffects(effects)
 }
