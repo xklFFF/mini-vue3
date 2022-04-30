@@ -103,7 +103,7 @@ describe("effect", () => {
   })
   //测试嵌套响应问题，来自《vue设计与实现》书上的测试案例
   it("nested effect", () => {
-    const data = { foo: true, bar: true }
+    const data = { foo: false, bar: false }
     const obj = reactive(data)
     let temp1, temp2
 

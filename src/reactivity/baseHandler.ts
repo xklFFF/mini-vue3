@@ -1,7 +1,7 @@
-import { extend, hasOwn, isObeject } from "../share";
-import { track, trigger,ITERATE_KEY} from "./effect"
+import { extend, hasChanged, hasOwn, isObeject } from "../share";
+import { track, trigger, ITERATE_KEY } from "./effect"
 import { TriggerOpTypes } from "./operations";
-import { reactive, ReactiveFlags, readonly } from "./reactive";
+import { reactive, ReactiveFlags, readonly, toRaw } from "./reactive";
 
 const get = createGetter();
 const set = createSetter();
@@ -34,10 +34,23 @@ function createGetter(isReadonly = false, shallow = false) {
 
 function createSetter() {
     return function set(target, key, value) {
-        const type=hasOwn(target,key)?TriggerOpTypes.SET:TriggerOpTypes.ADD
+        const hadKey = hasOwn(target, key)
+        // 要注意在这里必须先获取旧值
+        let oldValue = target[key]
         const res = Reflect.set(target, key, value)
-        
-        trigger(target, key,type)
+        // 判断设置的对象跟代理对象是否有关系，解决了原型问题
+        if (target === toRaw(target)) {
+            // 如果原型没用这个key说明是新增加的
+            if (!hadKey) {
+                trigger(target, key, TriggerOpTypes.ADD)
+
+            } else if (hasChanged(value, oldValue)) {
+                // 比较新值与旧值，只有当他们不全等，并且都不是NaN的时候才触发响应
+                trigger(target, key, TriggerOpTypes.SET)
+            }
+        }
+
+
         return res
     }
 }
@@ -49,21 +62,21 @@ function has(target, key) {
     return result
 }
 //用来拦截删除操作
-function deleteProperty(target,key){
-    const hadKey = hasOwn(target,key)
+function deleteProperty(target, key) {
+    const hadKey = hasOwn(target, key)
     const oldValue = target[key]
-    const result = Reflect.deleteProperty(target,key)
-    if(result && hadKey){
-        trigger(target,key,TriggerOpTypes.DELETE)
+    const result = Reflect.deleteProperty(target, key)
+    if (result && hadKey) {
+        trigger(target, key, TriggerOpTypes.DELETE)
     }
     return result
 }
 //用来拦截for in操作
-function ownKeys(target){
+function ownKeys(target) {
 
-  track(target,ITERATE_KEY)
+    track(target, ITERATE_KEY)
 
-  return Reflect.ownKeys(target)
+    return Reflect.ownKeys(target)
 
 }
 export const mutableHandler = {
