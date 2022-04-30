@@ -43,11 +43,11 @@ function createSetter() {
         if (target === toRaw(receiver)) {
             // 如果原型没用这个key说明是新增加的
             if (!hadKey) {
-                trigger(target, key, TriggerOpTypes.ADD)
+                trigger(target, key, TriggerOpTypes.ADD, value)
 
             } else if (hasChanged(value, oldValue)) {
                 // 比较新值与旧值，只有当他们不全等，并且都不是NaN的时候才触发响应
-                trigger(target, key, TriggerOpTypes.SET)
+                trigger(target, key, TriggerOpTypes.SET, value)
             }
         }
 
@@ -68,7 +68,7 @@ function deleteProperty(target, key) {
     const oldValue = target[key]
     const result = Reflect.deleteProperty(target, key)
     if (result && hadKey) {
-        trigger(target, key, TriggerOpTypes.DELETE)
+        trigger(target, key, TriggerOpTypes.DELETE, undefined)
     }
     return result
 }

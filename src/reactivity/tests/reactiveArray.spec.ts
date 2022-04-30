@@ -18,27 +18,51 @@ describe('reactivity/reactive/Array', () => {
         expect(Object.keys(observed)).toEqual(['0'])
 
     })
+    // 当设置新的属性大于数组的索引长度的时候要触发跟length有关的属性
     test('should reactive when set a  index>array.length', () => {
         let len = 0
         const array = reactive([0])
         effect(() => {
-            len=array.length
+            len = array.length
         })
         expect(len).toBe(1)
-        array[1]=1
+        array[1] = 1
         expect(len).toBe(2)
     })
 
+    //当设置的长度不大于数组的索引长度不触发
     test('add existing index on Array should not trigger length dependency', () => {
         const array = new Array(3)
         const observed = reactive(array)
         const fn = jest.fn()
         effect(() => {
-          fn(observed.length)
+            fn(observed.length)
         })
         expect(fn).toHaveBeenCalledTimes(1)
         observed[1] = 1
         expect(fn).toHaveBeenCalledTimes(1)
-      })
+    })
+    test('should effect when array length change ', () => {
+        const array = reactive([0, 1, 2, 3])
+        let arr_0
+        let arr_1
+        let arr_2
+        let arr_3
+        effect(() => {
+            arr_0 = array[0]
+            arr_1 = array[1]
+            arr_2 = array[2]
+            arr_3 = array[3]
 
+        })
+        expect(arr_0).toBe(0)
+        expect(arr_1).toBe(1)
+        expect(arr_2).toBe(2)
+        expect(arr_3).toBe(3)
+        array.length=2
+        expect(arr_0).toBe(0)
+        expect(arr_1).toBe(1)
+        expect(arr_2).toBe(undefined)
+        expect(arr_3).toBe(undefined)
+    })
 })

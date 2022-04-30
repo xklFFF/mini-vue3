@@ -128,7 +128,7 @@ export function trackEffects(dep) {
     }
 }
 
-export function trigger(target, key, type) {
+export function trigger(target, key, type,newValue?:unknown) {
     //获取当前对象target对应的缓存map'
     let depsMap = targetMap.get(target)
     if (!depsMap) {
@@ -137,39 +137,35 @@ export function trigger(target, key, type) {
     }
 
     let deps: (Dep | undefined)[] = []
-    //获取对应属性key的依赖set集合
-    //此处使用void 0的原因
-    // undefined可以被重写
-    // 从性能方面： void 0 比 undefined 少了三个字节
-    // 保证结果不变性
-    if (key !== void 0) {
-        deps.push(depsMap.get(key))
-    }
-    // let dep = 
-    // if (!dep) {
-    //     return
-    // }
-
-    // triggerEffects(dep)
-    //只有当属性为ADD或者DELETE才触发与ITERATE_KEY相关的副作用
-    // if (type === TriggerOpTypes.ADD || type === TriggerOpTypes.DELETE) {
-    //     const iterateEffects = depsMap.get(ITERATE_KEY)
-    //     deps.push(iterateEffects)
-    // }
-
-    switch (type) {
-        case TriggerOpTypes.ADD:
-            if (!isArray(target)) {
-                deps.push(depsMap.get(ITERATE_KEY))
-            } else {
-                deps.push(depsMap.get('length'))
+    if (key === 'length' && isArray(target)) {
+        depsMap.forEach((dep, key) => {
+            if (key === 'length' || key >= (newValue as number)) {
+              deps.push(dep)
             }
-            break
-        case TriggerOpTypes.DELETE:
-            if (!isArray(target)) {
-                deps.push(depsMap.get(ITERATE_KEY))
-            }
-            break
+          })
+    } else {
+        //获取对应属性key的依赖set集合
+        //此处使用void 0的原因
+        // undefined可以被重写
+        // 从性能方面： void 0 比 undefined 少了三个字节
+        // 保证结果不变性
+        if (key !== void 0) {
+            deps.push(depsMap.get(key))
+        }
+        switch (type) {
+            case TriggerOpTypes.ADD:
+                if (!isArray(target)) {
+                    deps.push(depsMap.get(ITERATE_KEY))
+                } else {
+                    deps.push(depsMap.get('length'))
+                }
+                break
+            case TriggerOpTypes.DELETE:
+                if (!isArray(target)) {
+                    deps.push(depsMap.get(ITERATE_KEY))
+                }
+                break
+        }
     }
 
 
