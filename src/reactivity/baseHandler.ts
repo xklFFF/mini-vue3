@@ -25,7 +25,7 @@ function createGetter(isReadonly = false, shallow = false) {
         if (isObeject(res) && !shallow) {
             return isReadonly ? readonly(res) : reactive(res)
         }
-        if (!isReadonly) {
+        if (!isReadonly&&typeof key !=='symbol') {
             track(target, key)
         }
         return res

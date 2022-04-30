@@ -59,25 +59,36 @@ describe('reactivity/reactive/Array', () => {
         expect(arr_1).toBe(1)
         expect(arr_2).toBe(2)
         expect(arr_3).toBe(3)
-        array.length=2
+        array.length = 2
         expect(arr_0).toBe(0)
         expect(arr_1).toBe(1)
         expect(arr_2).toBe(undefined)
         expect(arr_3).toBe(undefined)
     })
 
-     // #2427
-  test('track length on for ... in iteration', () => {
-    const array = reactive([1])
-    let length = ''
-    effect(() => {
-      length = ''
-      for (const key in array) {
-        length += key
-      }
+    // #2427
+    test('track length on for ... in iteration', () => {
+        const array = reactive([1])
+        let length = ''
+        effect(() => {
+            length = ''
+            for (const key in array) {
+                length += key
+            }
+        })
+        expect(length).toBe('0')
+        array.push(1)
+        expect(length).toBe('01')
     })
-    expect(length).toBe('0')
-    array.push(1)
-    expect(length).toBe('01')
-  })
+    test('should not track symbolValue like symbol.iteratior', () => {
+        const arr = reactive([1, 2, 3])
+        effect(() => {
+            for (const val of arr) {
+                console.log(val);
+
+            }
+        })
+        arr[1]='bar'
+        arr.length = 0
+    })
 })
