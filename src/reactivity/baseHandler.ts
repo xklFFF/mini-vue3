@@ -75,7 +75,8 @@ function deleteProperty(target, key) {
 //用来拦截for in操作
 function ownKeys(target) {
 
-    track(target, ITERATE_KEY)
+    const key=isArray(target)?'length':ITERATE_KEY
+    track(target, key)
 
     return Reflect.ownKeys(target)
 
