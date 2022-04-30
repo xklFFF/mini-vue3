@@ -9,8 +9,29 @@ const readonlyGet = createGetter(true);
 const shallowReadonlyGet = createGetter(true, true)
 const shallowReactiveGet = createGetter(false, true)
 
+//重写数组的方法
+const arrayInstrumentations = createArrayInstrumentations()
+function createArrayInstrumentations() {
+    const instrumentations = {}
+    // instrument identity-sensitive Array methods to account for possible reactive
+    ;['includes','indexOf','lastIndexOf'].forEach(method=>{
+        const originMethod = Array.prototype[method]
+    instrumentations[method] = function(...args){
+            //this 是代理对象，先在代理对象中查找，将结果存储到res中
+            let res = originMethod.apply(this,args)
+            if(res === false){
+                res = originMethod.apply(toRaw(this),args)
+            }
+            return res
+        }
+    })
+    return instrumentations
+  }
+  
+
+
 function createGetter(isReadonly = false, shallow = false) {
-    return function get(target, key) {
+    return function get(target, key,receiver) {
 
         if (key === ReactiveFlags.IS_REACTIVE) {
             return !isReadonly
@@ -19,7 +40,11 @@ function createGetter(isReadonly = false, shallow = false) {
         } else if (key === ReactiveFlags.RAW) {
             return target
         }
-        const res = Reflect.get(target, key)
+
+        if(isArray(target)&&arrayInstrumentations.hasOwnProperty(key)){
+            return Reflect.get(arrayInstrumentations,key,receiver)
+        }
+        const res = Reflect.get(target, key,receiver)
         //如果shallow就返回，那么没法被追踪到
         // 嵌套对象也需要转换成响应式
         if (isObeject(res) && !shallow) {

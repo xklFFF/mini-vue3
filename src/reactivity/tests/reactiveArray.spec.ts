@@ -91,4 +91,10 @@ describe('reactivity/reactive/Array', () => {
         arr[1]='bar'
         arr.length = 0
     })
+    test('the serch method of array',()=>{
+        const obj = {}
+        const arr = reactive([obj])
+        expect(arr.includes(arr[0])).toBe(true)
+        expect(arr.includes(obj)).toBe(true)
+    })
 })
