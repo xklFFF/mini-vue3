@@ -8,13 +8,27 @@ let effectStack = <any>[]
 
 export const ITERATE_KEY = Symbol()
 
-let shouldTrack = false
-// 全局变量用来记录嵌套的深度
+
 let effectTrackDepth = 0
 //用来标记
 export let trackOpBit = 1
 //追踪的最大嵌套层数（30跟JavaScript中的位数有关最多31位）
 const maxTrackOpBits = 30
+
+let shouldTrack = false
+const trackStack: boolean[] = []
+// 全局变量用来记录嵌套的深度
+
+export function pauseTracking() {
+    trackStack.push(shouldTrack)
+    shouldTrack = false
+}
+export function resetTracking() {
+    const last = trackStack.pop()
+    shouldTrack = last === undefined ? true : last
+}
+
+
 export class ReactiveEffect {
     private _fn: any
     deps: Dep[] = []
@@ -128,7 +142,7 @@ export function trackEffects(dep) {
     }
 }
 
-export function trigger(target, key, type,newValue?:unknown) {
+export function trigger(target, key, type, newValue?: unknown) {
     //获取当前对象target对应的缓存map'
     let depsMap = targetMap.get(target)
     if (!depsMap) {
@@ -140,9 +154,9 @@ export function trigger(target, key, type,newValue?:unknown) {
     if (key === 'length' && isArray(target)) {
         depsMap.forEach((dep, key) => {
             if (key === 'length' || key >= (newValue as number)) {
-              deps.push(dep)
+                deps.push(dep)
             }
-          })
+        })
     } else {
         //获取对应属性key的依赖set集合
         //此处使用void 0的原因

@@ -97,4 +97,16 @@ describe('reactivity/reactive/Array', () => {
         expect(arr.includes(arr[0])).toBe(true)
         expect(arr.includes(obj)).toBe(true)
     })
+
+    test('the method change length invisible',()=>{
+        const arr=reactive([])
+        effect(()=>{
+            arr.push(1)
+        })
+        effect(()=>{
+            arr.push(2)
+        })
+        expect(arr[0]).toBe(1)
+        expect(arr[1]).toBe(2)
+    })
 })

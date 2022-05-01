@@ -1,5 +1,5 @@
 import { extend, hasChanged, hasOwn, isArray, isObeject } from "../share";
-import { track, trigger, ITERATE_KEY } from "./effect"
+import { track, trigger, ITERATE_KEY, pauseTracking, resetTracking } from "./effect"
 import { TriggerOpTypes } from "./operations";
 import { reactive, ReactiveFlags, readonly, toRaw } from "./reactive";
 
@@ -25,6 +25,20 @@ function createArrayInstrumentations() {
             return res
         }
     })
+    //这些函数被调用时会追踪跟触发length相关副作用函数导致溢出
+      // instrument length-altering mutation methods to avoid length being tracked
+  // which leads to infinite loops in some cases (#2137)
+  ;['push', 'pop', 'shift', 'unshift', 'splice'].forEach(method => {
+    const originMethod = Array.prototype[method]
+    instrumentations[method] = function(...args){
+        // 暂停追踪、
+        pauseTracking()
+        let res = originMethod.apply(this,args)
+        // 继续追踪
+        resetTracking()
+            return res
+        }
+  })
     return instrumentations
   }
   
