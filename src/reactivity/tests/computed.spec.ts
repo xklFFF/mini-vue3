@@ -1,4 +1,5 @@
 import { computed } from "../computed";
+import { effect } from "../effect";
 import { reactive } from "../reactive";
 
 describe("computed", () => {
@@ -45,4 +46,23 @@ describe("computed", () => {
     cValue.value;
     expect(getter).toHaveBeenCalledTimes(2);
   });
+
+  // 不是整数型的key不触发length有关副作用函数
+  test('add non-integer prop on Array should not trigger length dependency', () => {
+    const array = new Array(3)
+    const observed = reactive(array)
+    const fn = jest.fn()
+    effect(() => {
+      fn(observed.length)
+    })
+    expect(fn).toHaveBeenCalledTimes(1)
+    // @ts-ignore
+    observed.x = 'x'
+    expect(fn).toHaveBeenCalledTimes(1)
+    observed[-1] = 'x'
+    expect(fn).toHaveBeenCalledTimes(1)
+    observed[NaN] = 'x'
+    expect(fn).toHaveBeenCalledTimes(1)
+  })
+
 });

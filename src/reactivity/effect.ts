@@ -1,5 +1,5 @@
 import { TrackOpTypes, TriggerOpTypes } from './operations'
-import { extend, isArray } from "../share/index"
+import { extend, isArray, isIntegerKey } from "../share/index"
 import { createDep, newTracked, wasTracked, initDepMarkers, finalizeDepMarkers, Dep } from "./dep"
 const targetMap = new Map()
 let activeEffect
@@ -170,7 +170,7 @@ export function trigger(target, key, type, newValue?: unknown) {
             case TriggerOpTypes.ADD:
                 if (!isArray(target)) {
                     deps.push(depsMap.get(ITERATE_KEY))
-                } else {
+                } else if(isIntegerKey(key)){
                     deps.push(depsMap.get('length'))
                 }
                 break
