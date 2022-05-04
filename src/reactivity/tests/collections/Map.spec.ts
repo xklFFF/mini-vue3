@@ -70,6 +70,31 @@ describe('reactivity/collections', () => {
             expect(dummy).toBe(undefined)
           })
 
+        //遍历操作
+      
+          it('should observe forEach iteration', () => {
+            let dummy: any
+            const map = reactive(new Map())
+            effect(() => {
+              dummy = 0
+              map.forEach((num: any) => (dummy += num))
+            })
+      
+            expect(dummy).toBe(0)
+            map.set('key1', 3)
+            expect(dummy).toBe(3)
+            map.set('key2', 2)
+            expect(dummy).toBe(5)
+            // iteration should track mutation of existing entries (#709)
+            map.set('key1', 4)
+            expect(dummy).toBe(6)
+            map.delete('key1')
+            expect(dummy).toBe(2)
+            map.clear()
+            expect(dummy).toBe(0)
+          })
+      
+
     })
 
 

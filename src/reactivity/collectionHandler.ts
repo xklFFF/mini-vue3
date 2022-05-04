@@ -25,8 +25,8 @@ function add(this: SetTypes, key: unknown) {
     const proto = getProto(target)
     const hadKey = proto.has.call(target, key)
     if (!hadKey) {
-      target.add(key)
-      trigger(target, key,TriggerOpTypes.ADD, key)
+        target.add(key)
+        trigger(target, key, TriggerOpTypes.ADD, key)
     }
     return this
 
@@ -36,15 +36,15 @@ function add(this: SetTypes, key: unknown) {
 function deleteEntry(this: any, key) {
     const target = toRaw(this)
     const { has } = getProto(target)
-    let hadKey = has.call(target,key)//是否存在当前key
+    let hadKey = has.call(target, key)//是否存在当前key
     let res = false
-    if(!hadKey){
+    if (!hadKey) {
         key = toRaw(key)
-        hadKey = has.call(target,key)
+        hadKey = has.call(target, key)
     }
     if (hadKey) {
         res = target.delete(key)
-        trigger(target, key, TriggerOpTypes.DELETE,undefined)
+        trigger(target, key, TriggerOpTypes.DELETE, undefined)
     }
     return res
 }
@@ -80,7 +80,7 @@ function set(this: MapTypes, key, value) {
     if (!oldValue) {
         //新增
         trigger(target, key, TriggerOpTypes.ADD, value)
-    } else if(hasChanged(value,oldValue)){
+    } else if (hasChanged(value, oldValue)) {
         //更新
         trigger(target, key, TriggerOpTypes.SET, value)
     }
@@ -106,14 +106,31 @@ function size(target: IterableCollections, isReadonly = false) {
     return Reflect.get(target, 'size', target)
 }
 
-function clear(this:IterableCollections){
-    const target =toRaw(this)
-    const hadItems = target.size!== 0
+function clear(this: IterableCollections) {
+    const target = toRaw(this)
+    const hadItems = target.size !== 0
     const result = target.clear()
-    if(hadItems){
-        trigger(target,undefined,TriggerOpTypes.CLEAR,undefined)
+    if (hadItems) {
+        trigger(target, undefined, TriggerOpTypes.CLEAR, undefined)
     }
     return result
+}
+
+function createForEach(isReadonly: boolean, isShallow: boolean) {
+    return function forEach(
+        this: IterableCollections,
+        callback: Function,
+        thisArg?: unknown
+    ) {
+        const observed = this as any
+        const target = observed[ReactiveFlags.RAW]
+        const rawTarget = toRaw(target)
+        const wrap = isShallow ? toShallow : isReadonly ? toReadonly : toShallow
+        !isReadonly && track(rawTarget, ITERATE_KEY)
+        return target.forEach((value, key) => {
+            return callback.call(thisArg, wrap(value), wrap(key), observed)
+        })
+    }
 }
 
 function createReadonlyMethod(type) {
@@ -140,7 +157,8 @@ function createInstrumentations() {
         add,
         set,
         delete: deleteEntry,
-        clear
+        clear,
+        forEach: createForEach(false, false)
     }
 
     const shallowInstrumentations = {
@@ -154,7 +172,8 @@ function createInstrumentations() {
         add,
         set,
         delete: deleteEntry,
-        clear
+        clear,
+        forEach: createForEach(false, true)
     }
 
     const readonlyInstrumentations: Record<string, Function> = {
@@ -171,6 +190,7 @@ function createInstrumentations() {
         set: createReadonlyMethod(TriggerOpTypes.SET),
         delete: createReadonlyMethod(TriggerOpTypes.DELETE),
         clear: createReadonlyMethod(TriggerOpTypes.CLEAR),
+        forEach: createForEach(true, false)
     }
 
     const shallowReadonlyInstrumentations: Record<string, Function> = {
@@ -187,6 +207,7 @@ function createInstrumentations() {
         set: createReadonlyMethod(TriggerOpTypes.SET),
         delete: createReadonlyMethod(TriggerOpTypes.DELETE),
         clear: createReadonlyMethod(TriggerOpTypes.CLEAR),
+        forEach: createForEach(true, true)
     }
 
 

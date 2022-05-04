@@ -65,6 +65,29 @@ describe('reactivity/collections', () => {
         expect(dummy).toBe(false)
       })
   
+      //遍历操作
+  
+      it('should observe forEach iteration', () => {
+        let dummy: any
+        const set = reactive(new Set())
+        effect(() => {
+          dummy = 0
+          set.forEach(num => (dummy += num))
+        })
+  
+        expect(dummy).toBe(0)
+        set.add(2)
+        set.add(1)
+        expect(dummy).toBe(3)
+        set.delete(2)
+        expect(dummy).toBe(1)
+        set.clear()
+        expect(dummy).toBe(0)
+      })
+
+
+
+
 
     })
 
