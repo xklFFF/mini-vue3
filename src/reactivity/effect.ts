@@ -151,7 +151,10 @@ export function trigger(target, key, type, newValue?: unknown) {
     }
 
     let deps: (Dep | undefined)[] = []
-    if (key === 'length' && isArray(target)) {
+    if(type === TriggerOpTypes.CLEAR){
+        deps=[...depsMap.values()]
+    }
+    else if (key === 'length' && isArray(target)) {
         depsMap.forEach((dep, key) => {
             if (key === 'length' || key >= (newValue as number)) {
                 deps.push(dep)
