@@ -7,7 +7,7 @@ let activeEffect
 let effectStack = <any>[]
 
 export const ITERATE_KEY = Symbol()
-
+export const MAP_KEY_ITERATE_KEY = Symbol()
 
 let effectTrackDepth = 0
 //用来标记
@@ -173,6 +173,9 @@ export function trigger(target, key, type, newValue?: unknown) {
             case TriggerOpTypes.ADD:
                 if (!isArray(target)) {
                     deps.push(depsMap.get(ITERATE_KEY))
+                    if (isMap(target)) {
+                        deps.push(depsMap.get(MAP_KEY_ITERATE_KEY))
+                      }
                 } else if(isIntegerKey(key)){
                     deps.push(depsMap.get('length'))
                 }
@@ -180,6 +183,9 @@ export function trigger(target, key, type, newValue?: unknown) {
             case TriggerOpTypes.DELETE:
                 if (!isArray(target)) {
                     deps.push(depsMap.get(ITERATE_KEY))
+                    if (isMap(target)) {
+                        deps.push(depsMap.get(MAP_KEY_ITERATE_KEY))
+                      }
                 }
                 break
             case TriggerOpTypes.SET:

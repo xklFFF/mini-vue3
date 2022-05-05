@@ -1,6 +1,6 @@
-import { hasChanged, hasOwn } from "../share";
-import { ITERATE_KEY, track, trigger } from "./effect";
-import { TriggerOpTypes } from "./operations";
+import { hasChanged, hasOwn, isMap } from "../share";
+import { ITERATE_KEY, MAP_KEY_ITERATE_KEY, track, trigger } from "./effect";
+import { TrackOpTypes, TriggerOpTypes } from "./operations";
 import { isReactive, ReactiveFlags, toRaw, toReactive, toReadonly } from "./reactive";
 
 export type CollectionTypes = IterableCollections | WeakCollections
@@ -145,6 +145,53 @@ function createReadonlyMethod(type) {
     }
 }
 
+function createIterableMethod(
+    method: string | symbol,
+    isReadonly: boolean,
+    isShallow: boolean
+) {
+    return function (
+        this: IterableCollections,
+        ...args: unknown[]
+    ) {
+        const target = this[ReactiveFlags.RAW]
+        const rawTarget = toRaw(target)
+        //用来判断是否为map类型
+        const targetIsMap = isMap(rawTarget)
+        //是否需要返回完整的键值对
+        const isPair = method === 'entries' || (method === Symbol.iterator && targetIsMap)
+        //是否只关心键
+        const isKeyOnly = method === 'keys' && targetIsMap
+        // 内部的遍历器
+        const innerIterator = target[method](...args)
+        const wrap = isShallow ? toShallow : isReadonly ? toReadonly : toReactive
+        !isReadonly && track(
+            rawTarget,
+            isKeyOnly ? MAP_KEY_ITERATE_KEY : ITERATE_KEY
+        )
+        return {
+            next() {
+                const { value, done } = innerIterator.next()
+                return done
+                    ? { value, done }
+                    : {
+                        value: isPair ? [wrap(value[0]), wrap(value[1])] : wrap(value),
+                        done
+                    }
+
+
+            },
+            [Symbol.iterator]() {
+                return this
+            }
+        }
+
+    }
+}
+
+
+
+
 function createInstrumentations() {
     const mutableInstrumentations = {
         get(this: MapTypes, key: unknown) {
@@ -210,7 +257,29 @@ function createInstrumentations() {
         forEach: createForEach(true, true)
     }
 
-
+    const iteratorMethods = ['keys', 'values', 'entries', Symbol.iterator]
+    iteratorMethods.forEach(method => {
+        mutableInstrumentations[method as string] = createIterableMethod(
+            method,
+            false,
+            false
+        )
+        readonlyInstrumentations[method as string] = createIterableMethod(
+            method,
+            true,
+            false
+        )
+        shallowInstrumentations[method as string] = createIterableMethod(
+            method,
+            false,
+            true
+        )
+        shallowReadonlyInstrumentations[method as string] = createIterableMethod(
+            method,
+            true,
+            true
+        )
+    })
 
     return [
         mutableInstrumentations,
