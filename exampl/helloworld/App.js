@@ -7,12 +7,14 @@ export const App = {
                 id:"root",
                 class:["red","bold"]
             },
-            [h("p", { class:"red"}, "hi"), h("p", {class:"blue"}, "mini-vue")]
+            // [h("p", { class:"red"}, "hi"), h("p", {class:"blue"}, "mini-vue")]
+            `${this.greet},${this.msg}`
         )
     },
     setup() {
         return {
-            msg : "mini-vue"
+            msg : "mini-vue",
+            greet:'hi nihao'
         }
     }
 }

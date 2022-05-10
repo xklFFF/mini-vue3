@@ -59,7 +59,9 @@ function mountComponent(vnode,container){
 }
 
 function setupRenderEffect(instance,container){
-    const subTree = instance.render()
+    const subTree = instance.render.call(instance.setupState)
+    console.log(instance);
+    
     patch(subTree,container)
 }
 

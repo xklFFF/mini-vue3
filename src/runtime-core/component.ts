@@ -21,6 +21,7 @@ function setupStatefulComponent(instance) {
     const { setup } = component
     if (setup) {
         const setupResult = setup()
+        instance.setupState = setupResult
         handleSetupResult(instance, setupResult)
     }
 }
