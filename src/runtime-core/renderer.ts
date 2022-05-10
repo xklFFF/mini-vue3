@@ -32,10 +32,18 @@ function mountElement(vnode,container){
     }
     // 处理props
     const {props} = vnode
+    const isOn = (key:string)=>/^on[A-Z]/.test(key)
     for(const key in props){
         const val = props[key]
+        //监听事件
+        if(isOn(key)){
+            const event = key.slice(2).toLocaleLowerCase()
+            el.addEventListener(event,val)
+        }else{
         el.setAttribute(key, val);
+        }
     }
+    
     container.append(el)
 }
 
