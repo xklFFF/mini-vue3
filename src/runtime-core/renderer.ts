@@ -1,5 +1,6 @@
 import { isArray, isObeject, isString } from "../share"
 import { createComponentInstance, setupComponent } from "./component"
+import { ShapeFlags } from "./ShapeFlags"
 
 export function render(vnode,container){
     patch(vnode,container)
@@ -7,10 +8,11 @@ export function render(vnode,container){
 
 
 function patch(vnode,container){
-    if(isString(vnode.type)){
+    const {shapeFlag} = vnode
+    if(shapeFlag & ShapeFlags.ELEMENT){
         // 处理element
         processElement(vnode,container)
-    }else if(isObeject(vnode.type)){
+    }else if(shapeFlag & ShapeFlags.STATEFUL_COMPONENT){
         processComponent(vnode,container)
     }
 }
@@ -21,11 +23,11 @@ function processElement(vnode,container){
 function mountElement(vnode,container){
     //创建真实节点
     const el = (vnode.el=document.createElement(vnode.type))
-    const { children } = vnode
+    const { children,shapeFlag } = vnode
     // 处理儿子节点
-    if(isString(children)){
+    if(shapeFlag & ShapeFlags.TEXT_CHILDREN){
         el.textContent = children
-    }else if(isArray(children)){
+    }else if(shapeFlag & ShapeFlags.ARRAY_CHILDREN){
         mountChildren(vnode,el)
     }
     // 处理props
