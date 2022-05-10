@@ -7,10 +7,10 @@ export function render(vnode,container){
 
 
 function patch(vnode,container){
-    if(isString(vnode)){
+    if(isString(vnode.type)){
         // 处理element
         processElement(vnode,container)
-    }else if(isObeject(vnode)){
+    }else if(isObeject(vnode.type)){
         processComponent(vnode,container)
     }
 }
