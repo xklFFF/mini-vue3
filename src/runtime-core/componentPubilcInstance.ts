@@ -2,6 +2,7 @@ import { hasOwn } from "../share";
 
 const publicPropertiesMap = {
     $el: (i) => i.vnode.el,
+    $slots: (i) => i.slots
   };
 
 

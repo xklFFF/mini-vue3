@@ -1,6 +1,6 @@
 import { isArray, isObeject, isString } from "../share"
 import { createComponentInstance, setupComponent } from "./component"
-import { ShapeFlags } from "./ShapeFlags"
+import { ShapeFlags } from "../share/ShapeFlags"
 
 export function render(vnode,container){
     patch(vnode,container)

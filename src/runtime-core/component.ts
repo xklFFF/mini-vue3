@@ -3,6 +3,7 @@ import { isObeject } from "../share"
 import { emit } from "./componentEmit"
 import { initProps } from "./componentProps"
 import { PublicInstanceProxyHandlers } from "./componentPubilcInstance"
+import { initSlots } from "./componentSlots"
 
 export function createComponentInstance(vnode) {
     const component = {
@@ -10,6 +11,7 @@ export function createComponentInstance(vnode) {
         type: vnode.type,
         setupState: {},
         props: {},
+        slots:{},
         emit: () => { }
     }
     // 预输入实例
@@ -21,7 +23,7 @@ export function createComponentInstance(vnode) {
 export function setupComponent(instance) {
     // ToDo
     initProps(instance, instance.vnode.props)
-    // initSlots()
+    initSlots(instance,instance.vnode.children)
     setupStatefulComponent(instance)
 }
 
