@@ -13,7 +13,7 @@ export function createVnode(type,props:any={},children:any=[]){
     if(isString(children)){
         vnode.shapeFlag|= ShapeFlags.TEXT_CHILDREN
     }else if( isArray(children)){
-        vnode.shapeFlag|=ShapeFlags.STATEFUL_COMPONENT
+        vnode.shapeFlag|=ShapeFlags.ARRAY_CHILDREN
     }
     return vnode
 }
