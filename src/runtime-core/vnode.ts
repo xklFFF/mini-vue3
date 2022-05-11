@@ -1,6 +1,10 @@
 import { isArray, isObeject, isString } from "../share"
 import { ShapeFlags } from "../share/ShapeFlags"
 
+
+export const Text = Symbol("Text")
+export const Fragment = Symbol("Fragment")
+
 export function createVnode(type, props: any = {}, children: any = []) {
     const vnode = {
         type,
@@ -17,14 +21,18 @@ export function createVnode(type, props: any = {}, children: any = []) {
     }
 
     //若组件的子代也是对象则标记为slot
-    if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT){
-        if(isObeject(children)){
+    if (vnode.shapeFlag & ShapeFlags.STATEFUL_COMPONENT) {
+        if (isObeject(children)) {
             vnode.shapeFlag |= ShapeFlags.SLOT_CHILDREN
         }
     }
-        return vnode
+    return vnode
 }
 
 function getShapeFlag(type) {
     return isString(type) ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT
+}
+
+export function createTextVNode(text:string) {
+    return createVnode(Text,{},text)
 }
