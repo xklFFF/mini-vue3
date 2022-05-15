@@ -10,6 +10,7 @@ export function createVnode(type, props: any = {}, children: any = []) {
         type,
         props,
         children,
+        key: props && props.key,
         shapeFlag: getShapeFlag(type),
         // 用来存储虚拟节点渲染出来的真实节点
         el: null
@@ -33,6 +34,6 @@ function getShapeFlag(type) {
     return isString(type) ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT
 }
 
-export function createTextVNode(text:string) {
-    return createVnode(Text,{},text)
+export function createTextVNode(text: string) {
+    return createVnode(Text, {}, text)
 }
