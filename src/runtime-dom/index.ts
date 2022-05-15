@@ -4,7 +4,7 @@ function createElement(type) {
     return document.createElement(type)
 }
 
-function patchProp(el, key, preval,nextVal) {
+function patchProp(el, key, preval, nextVal) {
     const isOn = (key: string) => /^on[A-Z]/.test(key)
     //监听事件
     if (isOn(key)) {
@@ -12,10 +12,10 @@ function patchProp(el, key, preval,nextVal) {
         el.addEventListener(event, nextVal)
     } else {
         //为空时移除原来属性
-        if(nextVal === undefined || nextVal ===null){
+        if (nextVal === undefined || nextVal === null) {
             el.removeAttribute(key)
-        }else{
-        el.setAttribute(key, nextVal);
+        } else {
+            el.setAttribute(key, nextVal);
 
         }
     }
@@ -23,9 +23,17 @@ function patchProp(el, key, preval,nextVal) {
 function insert(el, parent) {
     parent.append(el)
 }
-
-const renderer:any = createRenderer({
-    createElement, patchProp, insert
+function remove(child) {
+    const parent = child.parentNode
+    if (parent) {
+        parent.removeChild(child)
+    }
+}
+function setElementText(el, text) {
+    el.textContent = text
+}
+const renderer: any = createRenderer({
+    createElement, patchProp, insert, remove, setElementText
 })
 export function createApp(...args) {
     return renderer.createApp(...args)
