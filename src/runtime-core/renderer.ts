@@ -4,6 +4,8 @@ import { ShapeFlags } from "../share/ShapeFlags"
 import { Fragment, Text } from "./vnode"
 import { createAppAPI } from "./createApp";
 import { effect } from "../reactivity/effect";
+import { EMPTY_OBJ } from "../share";
+
 
 export function createRenderer(options) {
     const {
@@ -49,7 +51,32 @@ export function createRenderer(options) {
     }
     function patchElement(n1, n2, container) {
         console.log("patch element");
+        // 更新props
+        const oldProps = n1.props || EMPTY_OBJ
+        const newProps = n2.props || EMPTY_OBJ
+        const el = (n2.el = n1.el)
+        patchProps(el,oldProps,newProps)
 
+    }
+    function patchProps(el, oldProps, newProps) {
+        if(oldProps!==newProps){
+            //将每个新的属性进行patch
+            for (const key in newProps) {
+               const prevProp = oldProps[key]
+               const nextProp = newProps[key]
+               if(prevProp !== nextProp){
+                   hostPatchProp(el,key,prevProp,nextProp)
+               }
+            }
+            // 对每个新值的为空的属性进行卸载
+            if(oldProps!==EMPTY_OBJ){
+                for(const key in oldProps){
+                    if(!(key in newProps)){
+                        hostPatchProp(el,key,oldProps[key],null)
+                    }
+                }
+            }
+        }
     }
     function processElement(n1, n2, container, parentComponent) {
         //如果还没挂载过
@@ -74,7 +101,7 @@ export function createRenderer(options) {
         const { props } = vnode
         for (const key in props) {
             const val = props[key]
-            hostPatchProp(el, key, val)
+            hostPatchProp(el, key,null,val)
         }
         hostInsert(el, container)
     }
@@ -127,4 +154,6 @@ export function createRenderer(options) {
         createApp: createAppAPI(render)
     }
 }
+
+
 
