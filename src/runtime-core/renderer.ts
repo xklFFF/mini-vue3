@@ -161,12 +161,25 @@ export function createRenderer(options) {
             //TODO中间对比
             // a,b,(c,e,d),f,g
             // a,b,(e,c),f,g
+
+            //TODO
+            // 实现中间对比部分中的移动结点
+            // 需要判断是否需要移动
+
             let s1 = i
             let s2 = i
 
             //新结点数组中需要被patch的数量
             const toBePatched = e2 - s2 + 1
             let patched = 0
+
+            const newIndexToOldIndexMap = new Array(toBePatched);
+            newIndexToOldIndexMap.fill(0)
+            // 用来标记是否需要移动中间结点，避免不需要的时候还求最长递增子序列，影响性能
+            let moved = false
+            // 用来存储当前最大索引，方便判断是否需要移动结点
+            let maxNewIndexSoFar = 0;
+
             const keyToNewIndexMap = new Map()
             // 遍历需要处理的新子节点数组，建立以key为键以索引为值的键值对
             for (let i = s2; i <= e2; i++) {
@@ -181,24 +194,65 @@ export function createRenderer(options) {
                     continue
                 }
 
-                let nexIndex;
-                if(prevChild.key!==null){
-                    nexIndex = keyToNewIndexMap.get(prevChild.key)
-                }else{
+                let newIndex;
+                if (prevChild.key != null) {
+                    newIndex = keyToNewIndexMap.get(prevChild.key)
+                } else {
                     // 如果没有key那只好去遍历新结点数组
-                    for(let j = s2;j<e2;j++){
-                        if(isSameVNodeType(prevChild,c2[j])){
-                            nexIndex = j
+                    for (let j = s2; j < e2; j++) {
+                        if (isSameVNodeType(prevChild, c2[j])) {
+                            newIndex = j
                             break
                         }
                     }
                 }
                 //说明这个旧结点在新结点数组里面是不存在的
-                if(nexIndex === undefined){
+                if (newIndex === undefined) {
                     hostRemove(prevChild.el)
-                }else{
-                    patch(prevChild,c2[nexIndex],container,parentComponent,null)
+                } else {
+
+                    if (newIndex >= maxNewIndexSoFar) {
+                        // 符合索引递增，说明不用移动结点
+                        maxNewIndexSoFar = newIndex
+                    } else {
+                        moved = true
+                    }
+                    //通过+1避免了跟为0的情况冲突
+                    newIndexToOldIndexMap[newIndex - s2] = i + 1
+                    patch(prevChild, c2[newIndex], container, parentComponent, null)
                     patched++
+                }
+            }
+
+            //旧 ["p1","p2","p3","p4","p6","p5"]
+            // 新 ["p1","p3","p4","p2","p7","p5"]
+            // 中间对比部分
+            // ["p2","p3","p4","p6"]
+            //  [“p3","p4","p2","p7"]
+            // 此时的newIndexToOldIndexMap
+            // [2,3,1,0]
+            //increasingNewIndexSequence [0,1]
+
+            // 根据需要来获取最小递增子序列
+            const increasingNewIndexSequence = moved
+                ? getSequence(newIndexToOldIndexMap)
+                : [];
+            let j = increasingNewIndexSequence.length - 1
+            for (let i = toBePatched - 1; i >= 0; i--) {
+                const nextIndex = i + s2
+                const nextChild = c2[nextIndex]
+                const anchor = nextIndex + 1 < l2 ? c2[nextIndex + 1].el : null
+                //说明旧结点中没有这个结点需要挂载个新的
+                if (newIndexToOldIndexMap[i] === 0) {
+                    patch(null, nextChild, container, parentComponent, anchor)
+                    console.log(anchor,nextChild);
+                    
+                } else if (moved) { //需要移动的情况
+                    if (j < 0 || i !== increasingNewIndexSequence[j]) {
+                        hostInsert(nextChild.el, container, anchor);
+                    } else {
+                        j--;
+                    }
                 }
             }
         }
@@ -256,7 +310,7 @@ export function createRenderer(options) {
             const val = props[key]
             hostPatchProp(el, key, null, val)
         }
-        hostInsert(el, container)
+        hostInsert(el, container,anchor)
     }
 
     function mountChildren(children, container, parentComponent, anchor) {
@@ -308,5 +362,43 @@ export function createRenderer(options) {
     }
 }
 
-
-
+function getSequence(arr) {
+    const p = arr.slice();
+    const result = [0];
+    let i, j, u, v, c;
+    const len = arr.length;
+    for (i = 0; i < len; i++) {
+        const arrI = arr[i];
+        if (arrI !== 0) {
+            j = result[result.length - 1];
+            if (arr[j] < arrI) {
+                p[i] = j;
+                result.push(i);
+                continue;
+            }
+            u = 0;
+            v = result.length - 1;
+            while (u < v) {
+                c = (u + v) >> 1;
+                if (arr[result[c]] < arrI) {
+                    u = c + 1;
+                } else {
+                    v = c;
+                }
+            }
+            if (arrI < arr[result[u]]) {
+                if (u > 0) {
+                    p[i] = result[u - 1];
+                }
+                result[u] = i;
+            }
+        }
+    }
+    u = result.length;
+    v = result[u - 1];
+    while (u-- > 0) {
+        result[u] = v;
+        v = p[v];
+    }
+    return result;
+}
