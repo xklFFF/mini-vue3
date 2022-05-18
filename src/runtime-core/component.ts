@@ -6,17 +6,18 @@ import { initProps } from "./componentProps"
 import { PublicInstanceProxyHandlers } from "./componentPubilcInstance"
 import { initSlots } from "./componentSlots"
 
-export function createComponentInstance(vnode,parent) {
+export function createComponentInstance(vnode, parent) {
     const component = {
         vnode,
         type: vnode.type,
         setupState: {},
         props: {},
-        slots:{},
+        slots: {},
         parent,
-        provides:parent?parent.provides:{},
-        isMounted:false,
-        subTree:{},
+        provides: parent ? parent.provides : {},
+        isMounted: false,
+        subTree: {},
+        next: null,
         emit: () => { }
     }
     // 预输入实例
@@ -28,7 +29,7 @@ export function createComponentInstance(vnode,parent) {
 export function setupComponent(instance) {
     // ToDo
     initProps(instance, instance.vnode.props)
-    initSlots(instance,instance.vnode.children)
+    initSlots(instance, instance.vnode.children)
     setupStatefulComponent(instance)
 }
 
@@ -38,7 +39,7 @@ function setupStatefulComponent(instance) {
     const { setup } = component
     if (setup) {
         setCurrentInstance(instance)
-        const setupResult = setup(shallowReadonly(instance.props),{emit:instance.emit})
+        const setupResult = setup(shallowReadonly(instance.props), { emit: instance.emit })
         setCurrentInstance(null)
         handleSetupResult(instance, setupResult)
     }
@@ -61,9 +62,9 @@ function finishComponentSetup(instance) {
 }
 
 let currentInstance = null
-export function getCurrentInstance(){
+export function getCurrentInstance() {
     return currentInstance
 }
-function setCurrentInstance(instance){
+function setCurrentInstance(instance) {
     currentInstance = instance
 }

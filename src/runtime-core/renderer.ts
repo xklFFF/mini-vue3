@@ -5,6 +5,7 @@ import { Fragment, Text } from "./vnode"
 import { createAppAPI } from "./createApp";
 import { effect } from "../reactivity/effect";
 import { EMPTY_OBJ } from "../share";
+import { shouldUpdateComponent } from "./componentUpdateUtils";
 
 
 export function createRenderer(options) {
@@ -245,8 +246,8 @@ export function createRenderer(options) {
                 //说明旧结点中没有这个结点需要挂载个新的
                 if (newIndexToOldIndexMap[i] === 0) {
                     patch(null, nextChild, container, parentComponent, anchor)
-                    console.log(anchor,nextChild);
-                    
+                    console.log(anchor, nextChild);
+
                 } else if (moved) { //需要移动的情况
                     if (j < 0 || i !== increasingNewIndexSequence[j]) {
                         hostInsert(nextChild.el, container, anchor);
@@ -310,7 +311,7 @@ export function createRenderer(options) {
             const val = props[key]
             hostPatchProp(el, key, null, val)
         }
-        hostInsert(el, container,anchor)
+        hostInsert(el, container, anchor)
     }
 
     function mountChildren(children, container, parentComponent, anchor) {
@@ -322,20 +323,38 @@ export function createRenderer(options) {
 
 
     function processComponent(n1, n2, container, parentComponent, anchor) {
-        mountComponent(n2, container, parentComponent, anchor)
+        //判断是要更新组件还是要重新挂载组件
+        if (!n1) {
+            mountComponent(n2, container, parentComponent, anchor)
+        } else {
+            updateComponent(n1, n2)
+        }
     }
 
+    function updateComponent(n1, n2) {
+        const instance = (n2.component = n1.component)
+        //判断是否需要更新
+        if (shouldUpdateComponent(n1, n2)) {
+            // 将新的虚拟节点挂载到实例上
+            instance.next = n2
+            // 调用组件实例的更新
+            instance.update()
+        } else {
+            n2.el = n1.el
+            instance.vnode = n2
+        }
+
+    }
     function mountComponent(initialVNode, container, parentComponent, anchor) {
-        //创建组件实例
-        const instance = createComponentInstance(initialVNode, parentComponent)
-        //初始化props，slots以及设置组件状态
+        //创建组件实例,并挂载到虚拟dom的component对象上
+        const instance = (initialVNode.component = createComponentInstance(initialVNode, parentComponent))       //初始化props，slots以及设置组件状态
         setupComponent(instance)
         // 获取vnode树，并且递归调用patch方法处理vnode树
         setupRenderEffect(instance, initialVNode, container, anchor)
     }
 
     function setupRenderEffect(instance, initialVNode, container, anchor) {
-        effect(() => {
+        instance.update = effect(() => {
             if (!instance.isMounted) {
                 console.log("init");
                 const { proxy } = instance;
@@ -348,6 +367,12 @@ export function createRenderer(options) {
                 instance.isMounted = true;
             } else {
                 console.log("update");
+                const { next, vnode } = instance;
+                if (next) {
+                  next.el = vnode.el;
+        
+                  updateComponentPreRender(instance, next);
+                }
                 const { proxy } = instance;
                 const subTree = instance.render.call(proxy);
                 const prevSubTree = instance.subTree;
@@ -362,6 +387,11 @@ export function createRenderer(options) {
     }
 }
 
+function updateComponentPreRender(instance,nextVnode){
+    instance.vnode = nextVnode
+    instance.next = null
+    instance.props = nextVnode.props
+}
 function getSequence(arr) {
     const p = arr.slice();
     const result = [0];

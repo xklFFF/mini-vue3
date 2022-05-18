@@ -10,6 +10,8 @@ export function createVnode(type, props: any = {}, children: any = []) {
         type,
         props,
         children,
+        //用来存储组件实例
+        component:null,
         key: props && props.key,
         shapeFlag: getShapeFlag(type),
         // 用来存储虚拟节点渲染出来的真实节点
