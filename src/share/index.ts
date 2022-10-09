@@ -6,6 +6,10 @@ export const EMPTY_OBJ = {};
 export const isObeject = (value) => {
     return value !== null && typeof value === 'object'
 }
+
+export const isFunction = (value) => {
+    return value !== null && typeof value === 'function'
+}
 export const hasChanged = (val, newValue) => {
     return !Object.is(val, newValue)
 }
