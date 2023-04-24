@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 import { effect } from "../effect"
 import { isReactive, reactive } from "../reactive"
 
@@ -34,7 +35,7 @@ describe('reactivity/reactive/Array', () => {
     test('add existing index on Array should not trigger length dependency', () => {
         const array = new Array(3)
         const observed = reactive(array)
-        const fn = jest.fn()
+        const fn = vi.fn()
         effect(() => {
             fn(observed.length)
         })
@@ -88,22 +89,22 @@ describe('reactivity/reactive/Array', () => {
 
             }
         })
-        arr[1]='bar'
+        arr[1] = 'bar'
         arr.length = 0
     })
-    test('the serch method of array',()=>{
+    test('the serch method of array', () => {
         const obj = {}
         const arr = reactive([obj])
         expect(arr.includes(arr[0])).toBe(true)
         expect(arr.includes(obj)).toBe(true)
     })
 
-    test('the method change length invisible',()=>{
-        const arr=reactive([])
-        effect(()=>{
+    test('the method change length invisible', () => {
+        const arr = reactive([])
+        effect(() => {
             arr.push(1)
         })
-        effect(()=>{
+        effect(() => {
             arr.push(2)
         })
         expect(arr[0]).toBe(1)

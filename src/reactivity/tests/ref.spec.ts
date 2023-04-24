@@ -1,3 +1,4 @@
+import { vi } from "vitest"
 import { effect } from "../effect"
 import { reactive } from "../reactive"
 import { isRef, ref, unRef, proxyRefs, toRef, toRefs } from "../ref"
@@ -143,14 +144,14 @@ describe("ref", () => {
         expect(dummyY).toBe(5)
     })
     test('toRefs should warn on plain object', () => {
-        console.warn = jest.fn()
+        console.warn = vi.fn()
         toRefs({})
         expect(console.warn).toHaveBeenCalled()
 
     })
 
     test('toRefs should warn on plain array', () => {
-        console.warn = jest.fn()
+        console.warn = vi.fn()
         toRefs([])
         expect(console.warn).toHaveBeenCalled()
 

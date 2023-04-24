@@ -1,7 +1,7 @@
 import { computed } from "../computed";
 import { effect } from "../effect";
 import { reactive } from "../reactive";
-
+import { vi } from "vitest"
 describe("computed", () => {
   it("happy path", () => {
     const user = reactive({
@@ -19,7 +19,7 @@ describe("computed", () => {
     const value = reactive({
       foo: 1,
     });
-    const getter = jest.fn(() => {
+    const getter = vi.fn(() => {
       return value.foo;
     });
     const cValue = computed(getter);
@@ -51,7 +51,7 @@ describe("computed", () => {
   test('add non-integer prop on Array should not trigger length dependency', () => {
     const array = new Array(3)
     const observed = reactive(array)
-    const fn = jest.fn()
+    const fn = vi.fn()
     effect(() => {
       fn(observed.length)
     })

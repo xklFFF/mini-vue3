@@ -1,7 +1,6 @@
-import format from "pretty-format"
 import { reactive } from "../reactive"
 import { effect, stop } from "../effect"
-
+import { vi } from "vitest"
 describe("effect", () => {
   //测试是否具有响应式，并且能触发依赖和依赖收集
   it("happy path", () => {
@@ -34,7 +33,7 @@ describe("effect", () => {
   it("scheduler", () => {
     let dummy;
     let run: any;
-    const scheduler = jest.fn(() => {
+    const scheduler = vi.fn(() => {
       run = runner;
     });
     const obj = reactive({ foo: 1 });
@@ -76,7 +75,7 @@ describe("effect", () => {
     const obj = reactive({
       foo: 1
     })
-    const onStop = jest.fn()
+    const onStop = vi.fn()
     let dummy
     const runner = effect(
       () => {
@@ -107,8 +106,8 @@ describe("effect", () => {
     const obj = reactive(data)
     let temp1, temp2
 
-    const effectFn1 = jest.fn()
-    const effectFn2 = jest.fn()
+    const effectFn1 = vi.fn()
+    const effectFn2 = vi.fn()
 
     effect(() => {
       effectFn1()
@@ -134,9 +133,9 @@ describe("effect", () => {
     const nums = reactive({ num1: 0, num2: 1, num3: 2 })
     const dummy: any = {}
 
-    const childSpy = jest.fn(() => (dummy.num1 = nums.num1))
+    const childSpy = vi.fn(() => (dummy.num1 = nums.num1))
     const childeffect = effect(childSpy)
-    const parentSpy = jest.fn(() => {
+    const parentSpy = vi.fn(() => {
       dummy.num2 = nums.num2
       childeffect()
       dummy.num3 = nums.num3
@@ -163,12 +162,12 @@ describe("effect", () => {
     expect(childSpy).toHaveBeenCalledTimes(5)
   })
 
-  
+
   it('should not be triggered by mutating a property, which is used in an inactive branch', () => {
     let dummy
     const obj = reactive({ prop: 'value', run: true })
 
-    const conditionalSpy = jest.fn(() => {
+    const conditionalSpy = vi.fn(() => {
       dummy = obj.run ? obj.prop : 'other'
     })
     effect(conditionalSpy)
