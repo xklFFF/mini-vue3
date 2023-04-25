@@ -1,6 +1,5 @@
-import { Ref } from "vue"
 import { effect, ReactiveEffect, stop } from "../reactivity/effect"
-import { isRef } from "../reactivity/ref"
+import { isRef, RefImpl } from "../reactivity/ref"
 import { EMPTY_OBJ, isFunction } from "../share"
 
 type OnCleanup = (cleanupFn: () => void) => void
@@ -31,7 +30,7 @@ export type WatchCallback<V = any, OV = any> = (
     onCleanup?: OnCleanup
 ) => any
 export type WatchSource<T> =
-    | Ref<T> // ref
+    | RefImpl // ref
     | (() => T) // getter
     | T extends object
     ? T
@@ -39,24 +38,24 @@ export type WatchSource<T> =
 function doWatch(source: WatchSource<any>, cb: WatchCallback, { immediate, deep, flush }: WatchOptions = EMPTY_OBJ) {
     let getter
     if (isRef(source)) {
-        getter = ()=>source.value
-    }else if(isFunction(source)){
+        getter = () => source.value
+    } else if (isFunction(source)) {
         getter = source
-    }else{
-        getter = ()=>traverse(source)
+    } else {
+        getter = () => traverse(source)
     }
     let oldValue
     let newValue
-    let cleanup 
+    let cleanup
     function onInvalidate(fn) {
         cleanup = fn
     }
     let job = () => {
         newValue = effectFn()
-        if(cleanup){
+        if (cleanup) {
             cleanup()
         }
-        cb( newValue,oldValue,onInvalidate)
+        cb(newValue, oldValue, onInvalidate)
         oldValue = newValue
     }
     const effectFn = effect(getter, {
@@ -68,15 +67,15 @@ function doWatch(source: WatchSource<any>, cb: WatchCallback, { immediate, deep,
 
 }
 
-export function watch(source:WatchSource<any>, cb: WatchCallback, options = {}) {
-    doWatch(source,cb,options)
+export function watch(source: WatchSource<any>, cb: WatchCallback, options = {}) {
+    doWatch(source, cb, options)
 }
 //遍历对象形成引用
-function traverse(value,seen = new Set()){
-    if(typeof value!=='object'||value === null||seen.has(value))return
+function traverse(value, seen = new Set()) {
+    if (typeof value !== 'object' || value === null || seen.has(value)) return
     seen.add(value)
-    for(const key in value){
-        traverse(value[key],seen)
+    for (const key in value) {
+        traverse(value[key], seen)
     }
     return value
 }

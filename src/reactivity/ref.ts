@@ -2,7 +2,7 @@ import { hasChanged, isArray, isObeject } from "../share"
 import { trackEffects, triggerEffects, isTracking } from "./effect"
 import { isProxy, reactive } from "./reactive"
 
-class RefImpl {
+export class RefImpl {
     private _value
     public dep
     //用来存储原始值
@@ -100,13 +100,13 @@ export function toRef<T extends object, k extends keyof T>(
 
 }
 
-export function toRefs(object){
-    if(!isProxy(object)){
+export function toRefs(object) {
+    if (!isProxy(object)) {
         console.warn(`toRefs() expects a reactive object but received a plain one.`)
     }
-    const res:any=isArray(object)?new Array(object.length):{}
-    for(const key in object){
-        res[key]=toRef(object,key)
+    const res: any = isArray(object) ? new Array(object.length) : {}
+    for (const key in object) {
+        res[key] = toRef(object, key)
     }
     return res
 }

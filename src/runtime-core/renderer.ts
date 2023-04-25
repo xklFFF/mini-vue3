@@ -6,6 +6,7 @@ import { createAppAPI } from "./createApp";
 import { effect } from "../reactivity/effect";
 import { EMPTY_OBJ } from "../share";
 import { shouldUpdateComponent } from "./componentUpdateUtils";
+import { queueJobs } from "./scheduler";
 
 
 export function createRenderer(options) {
@@ -369,9 +370,9 @@ export function createRenderer(options) {
                 console.log("update");
                 const { next, vnode } = instance;
                 if (next) {
-                  next.el = vnode.el;
-        
-                  updateComponentPreRender(instance, next);
+                    next.el = vnode.el;
+
+                    updateComponentPreRender(instance, next);
                 }
                 const { proxy } = instance;
                 const subTree = instance.render.call(proxy);
@@ -380,6 +381,10 @@ export function createRenderer(options) {
 
                 patch(prevSubTree, subTree, container, instance, anchor);
             }
+        }, {
+            scheduler() {
+                queueJobs(instance.update)
+            }
         });
     }
     return {
@@ -387,7 +392,7 @@ export function createRenderer(options) {
     }
 }
 
-function updateComponentPreRender(instance,nextVnode){
+function updateComponentPreRender(instance, nextVnode) {
     instance.vnode = nextVnode
     instance.next = null
     instance.props = nextVnode.props
