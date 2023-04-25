@@ -42,7 +42,7 @@ function parseInterpolation(context) {
 
     const rawContentLength = closeIndex - openDelimiter.length;
 
-    const rawContent = context.source.slice(0, rawContentLength);
+    const rawContent = parseTextData(context, rawContentLength);
     const content = rawContent.trim()
 
     advanceBy(context, rawContentLength + closeDelimiter.length);
@@ -55,6 +55,21 @@ function parseInterpolation(context) {
         },
     };
 }
+function parseText(context: any) {
+    const content = parseTextData(context, context.source.length)
+    return {
+        type: NodeTypes.TEXT,
+        content
+    }
+}
+function parseTextData(context: any, length) {
+    const content = context.source.slice(0, length);
+
+    // 2. 推进
+    advanceBy(context, length);
+    return content;
+}
+
 //消费掉已经使用过的字符
 function advanceBy(context: any, length: number) {
     context.source = context.source.slice(length);
@@ -82,7 +97,7 @@ function parseChildren(context) {
             node = parseElement(context);
         }
     }
-
+    if (!node) node = parseText(context)
     nodes.push(node);
 
     return nodes;
