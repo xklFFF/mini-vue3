@@ -15,7 +15,6 @@ export function generate(ast) {
     //返回的函数主体
     genNode(ast.codegenNode, context);
     push("}");
-
     return {
         code: context.code,
     };

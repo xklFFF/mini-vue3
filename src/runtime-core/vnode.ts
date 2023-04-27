@@ -4,14 +4,15 @@ import { ShapeFlags } from "../share/ShapeFlags"
 
 export const Text = Symbol("Text")
 export const Fragment = Symbol("Fragment")
+export { createVNode as createElementVNode };
 
-export function createVnode(type, props: any = {}, children: any = []) {
+export function createVNode(type, props: any = {}, children: any = []) {
     const vnode = {
         type,
         props,
         children,
         //用来存储组件实例
-        component:null,
+        component: null,
         key: props && props.key,
         shapeFlag: getShapeFlag(type),
         // 用来存储虚拟节点渲染出来的真实节点
@@ -37,5 +38,5 @@ function getShapeFlag(type) {
 }
 
 export function createTextVNode(text: string) {
-    return createVnode(Text, {}, text)
+    return createVNode(Text, {}, text)
 }

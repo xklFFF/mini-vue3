@@ -57,8 +57,13 @@ function handleSetupResult(instance, setupResult) {
 }
 // 将render函数挂载到instance
 function finishComponentSetup(instance) {
-    const component = instance.type
-    instance.render = component.render
+    const Component = instance.type
+    if (compiler && !Component.render) {
+        if (Component.template) {
+            Component.render = compiler(Component.template);
+        }
+    }
+    instance.render = Component.render
 }
 
 let currentInstance = null
@@ -67,4 +72,9 @@ export function getCurrentInstance() {
 }
 function setCurrentInstance(instance) {
     currentInstance = instance
+}
+let compiler;
+//用来注册函数，方便compiler跟runtime解耦
+export function registerRuntimeCompiler(_compiler) {
+    compiler = _compiler;
 }
