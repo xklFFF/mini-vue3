@@ -8,7 +8,10 @@ describe("transform", () => {
 
         const plugin = (node) => {
             if (node.type === NodeTypes.TEXT) {
-                node.content = node.content + " mini-vue";
+                return () => {
+                    node.content = node.content + " mini-vue";
+                }
+
             }
         };
 

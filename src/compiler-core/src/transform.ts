@@ -21,8 +21,12 @@ function createTransformContext(root: any, options: any): any {
 //深度遍历
 function traverseNode(node: any, context) {
     const nodeTransforms = context.nodeTransforms
+    //从叶子节点返回再调用处理函数
+    const exitFns: any = [];
     for (const transform of nodeTransforms) {
         transform(node)
+        const onExit = transform(node, context)
+        if (onExit) exitFns.push(onExit)
     }
     switch (node.type) {
         case NodeTypes.INTERPOLATION:
@@ -36,6 +40,10 @@ function traverseNode(node: any, context) {
         default:
             break;
     }
+    let i = exitFns.length;
+    while (i--) {
+        exitFns[i]();
+    }
 }
 function traverseChildren(node: any, context: any) {
     const children = node.children
@@ -45,6 +53,11 @@ function traverseChildren(node: any, context: any) {
 }
 
 function createRootCodegen(root: any) {
-    root.codegenNode = root.children[0]
+    const child = root.children[0];
+    if (child.type === NodeTypes.ELEMENT) {
+        root.codegenNode = child.codegenNode;
+    } else {
+        root.codegenNode = root.children[0];
+    }
 }
 
