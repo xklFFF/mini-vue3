@@ -3,6 +3,8 @@ import { reactive } from "../../reactivity/reactive"
 // import { nextTick } from 'vue';
 import { ref } from '../../reactivity';
 import { vi } from 'vitest';
+import { nextTick } from '../scheduler';
+import { queueJob } from '../scheduler';
 
 describe('api watch', () => {
   it('effect', async () => {
@@ -13,6 +15,7 @@ describe('api watch', () => {
     })
     expect(dummy).toBe(0)
     state.count++
+    await nextTick();
     expect(dummy).toBe(1)
   })
   it('watching single source: getter', async () => {
@@ -30,7 +33,7 @@ describe('api watch', () => {
       }
     )
     state.count++
-    // await nextTick()
+    await nextTick()
     expect(dummy).toMatchObject([1, 0])
   })
   it('watching reactive object', async () => {
@@ -48,7 +51,7 @@ describe('api watch', () => {
       }
     )
     state.count++
-    // await nextTick()
+    await nextTick()
     expect(dummy).toBe(1)
   })
   it("watch ref value", async () => {
@@ -66,26 +69,56 @@ describe('api watch', () => {
       }
     )
     state.value++
-    // await nextTick()
+    await nextTick()
     expect(dummy).toBe(1)
   })
-  it("clean outTime watch effect", async () => {
-    const count = ref(0)
-    const cleanup = vi.fn()
-    let dummy
-    const stop = watch(count, (count, prevCount, onCleanup) => {
-      onCleanup!(cleanup)
-      dummy = count
-    })
+  it("stopping the watcher (effect)", async () => {
+    const state = reactive({ count: 0 });
+    let dummy;
+    const stop: any = watchEffect(() => {
+      dummy = state.count;
+    });
+    expect(dummy).toBe(0);
 
-    count.value++
-    // await nextTick()
-    expect(cleanup).toHaveBeenCalledTimes(0)
-    expect(dummy).toBe(1)
+    stop();
+    state.count++;
+    await nextTick();
+    // should not update
+    expect(dummy).toBe(0);
+  });
 
-    count.value++
-    // await nextTick()
-    expect(cleanup).toHaveBeenCalledTimes(1)
-    expect(dummy).toBe(2)
+  it("cleanup registration (effect)", async () => {
+    const state = reactive({ count: 0 });
+    const cleanup = vi.fn();
+    let dummy;
+    const stop: any = watchEffect((onCleanup) => {
+      onCleanup(cleanup);
+      dummy = state.count;
+    });
+    expect(dummy).toBe(0);
+
+    state.count++;
+    await nextTick();
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    expect(dummy).toBe(1);
+
+    stop();
+    expect(cleanup).toHaveBeenCalledTimes(2);
+  });
+  it('flush timing: post', async () => {
+    const calls: string[] = []
+    const cb1 = () => {
+      calls.push('cb1')
+    }
+    const cb2 = () => {
+      calls.push('cb2')
+    }
+    const count = reactive({ val: 1 })
+    watch(() => count.val, cb1, { flush: 'post' })
+    count.val++
+    queueJob(cb2)
+    expect(calls).toEqual([])
+    await nextTick()
+    expect(calls).toEqual(['cb2', 'cb1'])
   })
 })

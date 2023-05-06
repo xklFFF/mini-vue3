@@ -1,6 +1,7 @@
 import { effect, ReactiveEffect, stop } from "../reactivity/effect"
 import { isRef, RefImpl } from "../reactivity/ref"
 import { EMPTY_OBJ, isFunction } from "../share"
+import { queueJob, queuePostFlushCb, queuePreFlushCb } from "./scheduler"
 
 type OnCleanup = (cleanupFn: () => void) => void
 
@@ -21,8 +22,7 @@ export function watchEffect(
     _effect: WatchEffect,
     options?: WatchOptionsBase,
 ): WatchStopHandle {
-    const runner = effect(_effect, options)
-    return () => { stop(runner) }
+    return doWatch(_effect, null, options)
 }
 export type WatchCallback<V = any, OV = any> = (
     value: V,
@@ -35,9 +35,21 @@ export type WatchSource<T> =
     | T extends object
     ? T
     : never // 响应式对象
-function doWatch(source: WatchSource<any>, cb: WatchCallback, { immediate, deep, flush }: WatchOptions = EMPTY_OBJ) {
+function doWatch(source: WatchSource<any>, cb: WatchCallback | null, { immediate, deep, flush }: WatchOptions = EMPTY_OBJ): WatchStopHandle {
+    let cleanup
+    const onCleanup = function (fn) {
+        cleanup = effect.onStop = () => {
+            fn();
+        };
+    };
     let getter
-    if (isRef(source)) {
+    if (cb === null) {//watchEffect
+        getter = () => {
+            if (cleanup) cleanup()
+            source(onCleanup)
+        }
+    }
+    else if (isRef(source)) {
         getter = () => source.value
     } else if (isFunction(source)) {
         getter = source
@@ -46,25 +58,47 @@ function doWatch(source: WatchSource<any>, cb: WatchCallback, { immediate, deep,
     }
     let oldValue
     let newValue
-    let cleanup
-    function onInvalidate(fn) {
-        cleanup = fn
-    }
-    let job = () => {
-        newValue = effectFn()
-        if (cleanup) {
-            cleanup()
-        }
-        cb(newValue, oldValue, onInvalidate)
-        oldValue = newValue
-    }
-    const effectFn = effect(getter, {
-        scheduler: () => {
-            job()
-        }
-    })
-    oldValue = effectFn()
 
+    let job = () => {
+        //watch
+        if (cb) {
+            newValue = effect.run()
+            if (cleanup) {
+                cleanup()
+            }
+            cb(newValue, oldValue, onCleanup)
+            oldValue = newValue
+        } else {//watchEffect
+            effect.run()
+        }
+    }
+    let scheduler: any
+    if (flush === 'sync') {
+        scheduler = job
+    } else if (flush === 'post') {
+        scheduler = () => queuePostFlushCb(job)
+    } else {
+        scheduler = () => queueJob(job)
+    }
+    const effect = new ReactiveEffect(getter, scheduler)
+    // initial run
+    if (cb) {
+        if (immediate) {
+            job()
+        } else {
+            oldValue = effect.run()
+        }
+    } else if (flush === 'post') {
+        queuePreFlushCb(
+            effect.run.bind(effect),
+        )
+    } else {
+        effect.run()
+    }
+    const unWatch = () => {
+        effect.stop()
+    }
+    return unWatch
 }
 
 export function watch(source: WatchSource<any>, cb: WatchCallback, options = {}) {
